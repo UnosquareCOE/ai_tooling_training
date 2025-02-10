@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using api.Constants;
 
 namespace api.ViewModels;
 
@@ -10,5 +11,5 @@ public class GameViewModel
     [JsonIgnore] public string? UnmaskedWord { get; set; }
 
     public List<string> IncorrectGuesses { get; set; } = [];
-    public string? Status { get; set; }
+    public GameStatuses Status { get; set; }
 }
