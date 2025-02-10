@@ -9,6 +9,8 @@ To submit a challenge, a pull request from a forked repository should be created
   - You should try and build this application with best practices in mind; using constants where possible and implementing architectural patterns that make sense.
 - Ensure test coverage exists for API request handlers and logic functions.
 - Pass all Github Action checks triggered by `pull_request`.
+  - Unit tests pass.
+  - Postman API tests pass.
 
 ## Learning Objectives
 - Use Copilot effectively for code generation.
@@ -44,7 +46,7 @@ Below are the high level requirements for the Hangman Game API:
      - 201 Created:
        - `gameId` - `Guid`: Unique identifier for the game.
        - `maskedWord` - `String`: The word to guess with letters masked (e.g., "____").
-       - `attemptsRemaining` - `Integer`: Number of attempts left.
+       - `attemptsRemaining` - `Integer`: Number of attempts left, should be 5 by default.
        - example:
        ```
         {

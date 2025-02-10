@@ -2,7 +2,7 @@ import { Response, Request } from "express";
 import { v4 as uuid } from "uuid";
 
 const games = {};
-const words = ['banana', "canine", "unosquare", "airport"];
+const words = ["banana", "canine", "unosquare", "airport"];
 const guessRegex = /[a-zA-Z0-9]/g;
 
 function createGame(req: Request, res: Response) {
@@ -33,7 +33,7 @@ function makeGuess(req: Request, res: Response) {
 
   if (!letter || letter.length != 1) {
     res.status(400).json({
-      message: 'Guess must be supplied with 1 letter',
+      message: "Letter cannot accept more than 1 character",
     });
     return;
   }

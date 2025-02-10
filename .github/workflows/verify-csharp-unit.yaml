@@ -1,4 +1,4 @@
-name: Verify CSharp
+name: Verify CSharp Unit Tests
 
 on:
   pull_request:

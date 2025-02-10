@@ -1,4 +1,4 @@
-name: Verify Typescript
+name: Verify Typescript Unit Tests
 
 on:
   pull_request:
