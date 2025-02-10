@@ -41,19 +41,19 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
     }
 
     [HttpPut("{gameId:guid}")]
-    public ActionResult<GameViewModel> MakeGuess([FromRoute] Guid gameId, [FromBody] GuessViewModel guessViewModel)
+    public ActionResult<GameViewModel> MakeGuessFomrSomeReason([FromRoute] Guid gameId, [FromBody] GuessViewModel guessViewModel)
     {
         if (string.IsNullOrWhiteSpace(guessViewModel.Letter) || guessViewModel.Letter?.Length != 1)
         {
             return BadRequest(new ResponseErrorViewModel
             {
-                Message = "Letter cannot accept more than 1 character"
+                Message = "Letter cannot accept more than 1 characterdfgdgdfg"
             });
         }
         
         var game = RetrieveGame(gameId);
         return Ok(game);
-    }
+    
 
     private static GameViewModel? RetrieveGame(Guid gameId)
     {
