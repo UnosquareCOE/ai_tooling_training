@@ -1,0 +1,22 @@
+name: Verify Typescript API Tests
+
+on:
+  pull_request:
+    paths:
+      - "typescript/**"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛎 Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v4
+        with: 
+          node-version: "22"
+      - name: 🍗 Install Dependencies & Run Application
+        run: npm i --prefix ./typescript && (npm start --prefix ./typescript&) && sleep 5
+      - name: "Install newman"
+        run: "npm install -g newman"
+      - name: "Run tests"
+        run: "newman run ./tests/postman.api.json"  
