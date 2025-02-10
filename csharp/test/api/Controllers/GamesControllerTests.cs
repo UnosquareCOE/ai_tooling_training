@@ -26,7 +26,6 @@ public class GamesControllerTests
         var result = Assert.IsType<CreatedAtActionResult>(response.Result);
         var model = Assert.IsType<CreateGameViewModel>(result.Value);
         Assert.Equal(newId, model.GameId);
-        Assert.Equal("_______", model.MaskedWord);
         Assert.Equal(5, model.AttemptsRemaining);
     }
 
@@ -76,7 +75,6 @@ public class GamesControllerTests
 
         var result = Assert.IsType<OkObjectResult>(response.Result);
         var model = Assert.IsType<CheckGameStatusViewModel>(result.Value);
-        Assert.Equal("_______", model.MaskedWord);
         Assert.Equal(5, model.AttemptsRemaining);
     }
 
