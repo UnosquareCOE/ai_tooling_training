@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using api.Constants;
 using api.ViewModels;
 using api.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -52,9 +53,11 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
             return NotFound();
         }
 
+        var maskedWord = new string(game.UnmaskedWord.Select(c => game.IncorrectGuesses.Contains(c.ToString()) ? c : '_').ToArray());
+
         var response = new CheckGameStatusViewModel
         {
-            MaskedWord = game.Word,
+            MaskedWord = maskedWord,
             AttemptsRemaining = game.RemainingGuesses,
             Guesses = game.IncorrectGuesses,
             Status = game.Status
@@ -85,13 +88,26 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
         }
 
         var letter = guessViewModel.Letter.ToLower();
-        if (!game.IncorrectGuesses.Contains(letter) && !game.Word.Contains(letter))
+        if (!game.IncorrectGuesses.Contains(letter) && !game.UnmaskedWord.Contains(letter))
         {
             game.IncorrectGuesses.Add(letter);
             game.RemainingGuesses--;
         }
+        else if (!game.IncorrectGuesses.Contains(letter) && game.UnmaskedWord.Contains(letter))
+        {
+            game.IncorrectGuesses.Add(letter);
+        }
 
-        var maskedWord = new string(game.UnmaskedWord.Select(c => game.IncorrectGuesses.Contains(c.ToString()) ? '_' : c).ToArray());
+        var maskedWord = new string(game.UnmaskedWord.Select(c => game.IncorrectGuesses.Contains(c.ToString()) ? c : '_').ToArray());
+
+        if (!maskedWord.Contains('_'))
+        {
+            game.Status = GameStatus.Won;
+        }
+        else if (game.RemainingGuesses <= 0)
+        {
+            game.Status = GameStatus.Lost;
+        }
 
         var response = new MakeGuessViewModel
         {
@@ -103,7 +119,6 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
 
         return Ok(response);
     }
-
     [HttpDelete("{gameId:guid}")]
     public IActionResult DeleteGame([FromRoute] Guid gameId)
     {
@@ -124,6 +139,6 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
 
     private string RetrieveWord()
     {
-        return _words[new Random().Next(3, _words.Length - 1)];
+        return _words[new Random().Next(0, _words.Length)];
     }
 }
