@@ -1,5 +1,6 @@
 using api.Controllers;
 using api.Utils;
+using api.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.test.Controllers;
@@ -23,7 +24,11 @@ public class GamesControllerTests
         var response = gamesController.CreateGame();
 
         Assert.IsType<OkObjectResult>(response.Result);
-        Assert.Equal(newId, ((OkObjectResult)response.Result).Value);
+        var result = (OkObjectResult)response.Result;
+        var responseModel = Assert.IsType<CreateGameResponseViewModel>(result.Value);
+        Assert.Equal(newId, responseModel.GameId);
+        Assert.Equal(5, responseModel.AttemptsRemaining);
+        Assert.All(responseModel.MaskedWord, c => Assert.Equal('_', c));
     }
 
     private static GamesController RetrieveController(IIdentifierGenerator identifierGenerator)
