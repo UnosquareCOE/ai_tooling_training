@@ -24,8 +24,6 @@ public class MappingProfile : Profile
             .ForMember(d => d.MaskedWord, o => o.MapFrom(x => x.Word))
             .ForMember(d => d.AttemptsRemaining, o => o.MapFrom(x => x.RemainingGuesses))
             .ForMember(d => d.Guesses, o => o.MapFrom(x => x.IncorrectGuesses));
-            
-
     }
 
     private void ConfigureViewModelToDto()
