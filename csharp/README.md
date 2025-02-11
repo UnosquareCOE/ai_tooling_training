@@ -63,7 +63,7 @@ Below are some prompts that can be tried from the `GamesController`. These promp
   ```
 3. Clarity on name.
   ```
-  Make this method name clearer in intent
+  Make this method name clear in intent
   ```
 4. Handle edge cases.
   ```
