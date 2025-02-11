@@ -32,12 +32,7 @@ public partial class GameService : IGameService
 
         Games.Add(newGameId, newGame);
 
-        return new CreateGameResponseDto
-        {
-            GameId = newGameId,
-            MaskedWord = newGame.Word,
-            AttemptsRemaining = newGame.RemainingGuesses
-        };
+        return _mapper.Map<CreateGameResponseDto>(newGame);
     }
 
     public GameDto? GetGame(Guid gameId)
@@ -53,13 +48,7 @@ public partial class GameService : IGameService
         var guessedLetter = guessViewModel.Letter!.ToLower();
         ProcessGuess(game, guessedLetter);
 
-        return new MakeGuessResponseDto
-        {
-            MaskedWord = game.Word,
-            AttemptsRemaining = game.RemainingGuesses,
-            Guesses = game.IncorrectGuesses,
-            Status = game.Status.ToString()
-        };
+        return _mapper.Map<MakeGuessResponseDto>(game);
     }
 
     public string? Cheat(Guid gameId)

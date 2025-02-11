@@ -10,8 +10,9 @@
         <PackageReference Include="AutoMapper" Version="13.0.1" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.4"/>
     </ItemGroup>
-
+    
     <ItemGroup>
-      <ProjectReference Include="..\..\services\services.csproj" />
+      <ProjectReference Include="..\services\services.csproj" />
     </ItemGroup>
+
 </Project>

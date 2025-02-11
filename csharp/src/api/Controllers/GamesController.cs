@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-using api.Utils;
 using api.ViewModels;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
@@ -12,9 +10,8 @@ namespace api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public partial class GamesController : ControllerBase
+public class GamesController : ControllerBase
 {
-    //private readonly string[] _words = ["banana", "canine", "unosquare", "airport"];
     private readonly IGameService _gameService;
     private readonly IMapper _mapper;
     
