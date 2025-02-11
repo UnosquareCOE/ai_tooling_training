@@ -8,7 +8,8 @@ namespace services.Services;
 
 public partial class GameService : IGameService
 {
-    private static readonly Dictionary<Guid, GameDto> Games = new();
+    //Temporary public access for unit tests
+    public static readonly Dictionary<Guid, GameDto> Games = new();
     private readonly IMapper _mapper;
 
     public GameService(IMapper mapper)
@@ -32,7 +33,9 @@ public partial class GameService : IGameService
 
         Games.Add(newGameId, newGame);
 
-        return _mapper.Map<CreateGameResponseDto>(newGame);
+        var response = _mapper.Map<CreateGameResponseDto>(newGame);
+        response.GameId = newGameId;
+        return response;
     }
 
     public GameDto? GetGame(Guid gameId)

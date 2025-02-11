@@ -3,6 +3,7 @@ using NSubstitute;
 using services.Constants;
 using services.Dtos;
 using services.Interfaces;
+using services.Profiles;
 using services.Services;
 
 namespace services.test.Services;
@@ -14,14 +15,24 @@ public class GameServiceTests
 
     public GameServiceTests()
     {
-        _mapper = Substitute.For<IMapper>();
+        _mapper = GetMapper();
         _httpClient = Substitute.For<HttpClient>();
-        _httpClient.BaseAddress = new Uri("http://example.com");
+        _httpClient.BaseAddress = new Uri("https://random-word-api.herokuapp.com");
     }
         
     private IGameService RetrieveService()
     {
         return new GameService(_mapper);
+    }
+    
+    private static IMapper GetMapper()
+    {
+        var config = new MapperConfiguration(cfg =>
+        {
+            cfg.AddProfile<GameProfile>();
+        });
+
+        return new Mapper(config);
     }
 
     [Fact]
@@ -49,10 +60,10 @@ public class GameServiceTests
             IncorrectGuesses = [],
             Status = GameStatuses.InProgress
         };
-            
-        var gameService = Substitute.For<IGameService>();
-        gameService.GetGame(Arg.Any<Guid>()).Returns(gameDto);
 
+        GameService.Games.Add(newId, gameDto);
+
+        var gameService = RetrieveService();
         var result = gameService.GetGame(newId);
 
         Assert.NotNull(result);
@@ -82,13 +93,14 @@ public class GameServiceTests
             Status = GameStatuses.InProgress
         };
 
+        GameService.Games.Add(newId, gameDto);
+
         var gameService = RetrieveService();
-        gameService.GetGame(Arg.Any<Guid>()).Returns(gameDto);
         var guessDto = new GuessDto { Letter = "e" };
         var response = gameService.MakeGuess(newId, guessDto);
 
         Assert.NotNull(response);
-        Assert.Equal("e______", response.MaskedWord);
+        Assert.Equal("e_____e", response.MaskedWord);
         Assert.Equal(5, response.AttemptsRemaining);
         Assert.Empty(response.Guesses);
         Assert.Equal(GameStatuses.InProgress.ToString(), response.Status);
@@ -103,13 +115,13 @@ public class GameServiceTests
             RemainingGuesses = 5,
             Word = "_______",
             UnmaskedWord = "example",
-            IncorrectGuesses = [],
+            IncorrectGuesses = new List<string>(),
             Status = GameStatuses.InProgress
         };
 
-        var gameService = Substitute.For<IGameService>();
-        gameService.GetGame(Arg.Any<Guid>()).Returns(gameDto);
+        GameService.Games.Add(newId, gameDto);
 
+        var gameService = RetrieveService();
         var guessDto = new GuessDto { Letter = "z" };
         var response = gameService.MakeGuess(newId, guessDto);
 
@@ -125,7 +137,7 @@ public class GameServiceTests
     public void Cheat_ShouldReturnUnmaskedWord_WhenGameExists()
     {
         var newId = Guid.NewGuid();
-        
+
         var gameDto = new GameDto
         {
             RemainingGuesses = 5,
@@ -135,9 +147,9 @@ public class GameServiceTests
             Status = GameStatuses.InProgress
         };
 
+        GameService.Games.Add(newId, gameDto);
+
         var gameService = RetrieveService();
-        _httpClient.GetStringAsync(Arg.Any<string>()).Returns(Task.FromResult("example"));
-        gameService.GetGame(newId).Returns(gameDto);
         var result = gameService.Cheat(newId);
 
         Assert.Equal(7, result.Length);
@@ -166,8 +178,9 @@ public class GameServiceTests
             Status = GameStatuses.InProgress
         };
 
+        GameService.Games.Add(newId, gameDto);
+
         var gameService = RetrieveService();
-        gameService.GetGame(Arg.Any<Guid>()).Returns(gameDto);
         var result = gameService.DeleteGame(newId);
 
         Assert.True(result);
