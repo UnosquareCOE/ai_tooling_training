@@ -51,7 +51,7 @@ Below are some prompts that can be tried from the `GamesController`. These promp
 ### Generate a method for Loading words from API - Ghost Text
 1. Create a method to Load words
   ```
-    public string[] LoadWordsFromApi()
+    public async Task<string[]> LoadWordsFromApi() {
   ```
 2. Hit return and review suggestions
 
