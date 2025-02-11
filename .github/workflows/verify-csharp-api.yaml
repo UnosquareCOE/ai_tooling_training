@@ -18,8 +18,10 @@ jobs:
         with: 
           node-version: "22"
       - name: 🍗 Restore nuget & Run Application
-        run: dotnet restore ./csharp/csharp.sln && (dotnet run --project ./csharp/src/api/api.csproj&) && sleep 5
-      - name: "Install newman"
-        run: "npm install -g newman"
+        run: dotnet restore ./csharp/csharp.sln && dotnet run --project ./csharp/src/api/api.csproj &
+      - name: "Install wait-on and newman"
+        run: npm install -g wait-on newman
+      - name: "Wait for API to be ready"
+        run: wait-on http://localhost:5000
       - name: "Run tests"
-        run: "newman run ./tests/postman.api.json"  
+        run: newman run ./tests/postman.api.json
