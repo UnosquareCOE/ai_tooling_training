@@ -179,6 +179,21 @@ In additional to the requirements, in order to demonstrate additional value with
 - Implement an architectural pattern; for example Layered architecture for business logic, retrievals from memory and external sources.
 - Implement mocking with a library for unit tests.
 
+### Prompt Suggestions
+In terms of specific prompts to try, there is a section within each application version for details. The future details reading will dig into more details, but at a high level prompts should:
+
+- Provide Context
+- Clearly state the task
+- Detail specific requirements
+- Provide examples 
+- Avoid ambiguous or open-ended questions
+- Concise 
+
+An example could be:
+```
+Design a Typescript function that determines if a single letter exists within a word at least once, but potentially many times and in a case-insensitive way. The function should make sure the letter is alphabetic and only a single character. Additionally that the word only supports characters and must be greater than or equal to 2 in length. The function should return the positions in which the letter occurs within the word and a boolean to indicate if the letter was present within the word.
+```
+
 ## Further Reading
 In additional to this exercise, there are some great resouces for additional content:
 - [Copilot VsCode Cheat Sheet](https://code.visualstudio.com/docs/copilot/copilot-vscode-features)
