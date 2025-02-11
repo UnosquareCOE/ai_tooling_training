@@ -22,6 +22,6 @@ jobs:
       - name: "Install wait-on and newman"
         run: npm install -g wait-on newman
       - name: "Wait for API to be ready"
-        run: wait-on http://localhost:5000
+        run: wait-on http://localhost:4567
       - name: "Run tests"
         run: newman run ./tests/postman.api.json
