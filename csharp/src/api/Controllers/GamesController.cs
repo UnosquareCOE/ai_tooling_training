@@ -78,8 +78,6 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
                 {
                     new { field = "letter", message = "Letter cannot accept more than 1 character" }
                 }
-                Message = "Letter cannot accept more than 1 character"
-
             });
         }
 
