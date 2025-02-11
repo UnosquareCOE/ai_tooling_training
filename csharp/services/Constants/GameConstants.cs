@@ -1,4 +1,4 @@
-namespace api.Constants;
+namespace services.Constants;
 
 public enum GameStatuses
 {

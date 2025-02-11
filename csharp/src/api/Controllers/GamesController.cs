@@ -1,52 +1,39 @@
 using System.Text.RegularExpressions;
-using api.Constants;
-using api.ViewModels;
 using api.Utils;
+using api.ViewModels;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using services.Constants;
+using services.Dtos;
+using services.Interfaces;
+using ResponseErrorDetailViewModel = api.ViewModels.ResponseErrorDetailViewModel;
 
 namespace api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public partial class GamesController(IIdentifierGenerator identifierGenerator) : ControllerBase
+public partial class GamesController : ControllerBase
 {
-    private static readonly Dictionary<Guid, GameViewModel> Games = new();
-    private readonly string[] _words = ["banana", "canine", "unosquare", "airport"];
-
-    [GeneratedRegex(@"[a-zA-Z0-9_]")]
-    private static partial Regex GuessRegex();
+    //private readonly string[] _words = ["banana", "canine", "unosquare", "airport"];
+    private readonly IGameService _gameService;
+    private readonly IMapper _mapper;
+    
+    public GamesController(IMapper mapper, IGameService gameService)
+    {
+        (_mapper, _gameService) = (mapper, gameService);
+    }
 
     [HttpPost]
     public async Task<ActionResult<CreateGameResponseViewModel>> CreateGame([FromBody] CreateGameRequestViewModel request)
     {
-        var newGameWord = await RetrieveWord(request.Language);
-        var newGameId = identifierGenerator.RetrieveIdentifier();
-
-        var newGame = new GameViewModel
-        {
-            RemainingGuesses = 5,
-            UnmaskedWord = newGameWord,
-            Word = GuessRegex().Replace(newGameWord, "_"),
-            Status = GameStatuses.InProgress,
-            IncorrectGuesses = []
-        };
-
-        Games.Add(newGameId, newGame);
-
-        var response = new CreateGameResponseViewModel
-        {
-            GameId = newGameId,
-            MaskedWord = newGame.Word,
-            AttemptsRemaining = newGame.RemainingGuesses
-        };
-
-        return Ok(response);
+        var newGameResponseDto = await _gameService.CreateGame(_mapper.Map<CreateGameRequestDto>(request));
+        return Ok(_mapper.Map<CreateGameResponseViewModel>(newGameResponseDto));
     }
 
     [HttpGet("{gameId:guid}")]
     public ActionResult<GameViewModel> GetGame([FromRoute] Guid gameId)
     {
-        var game = RetrieveGame(gameId);
+        var game = _gameService.GetGame(gameId);
         if (game == null)
         {
             return NotFound(new ResponseErrorViewModel
@@ -62,14 +49,7 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
                 ]
             });
         }
-        var response = new MakeGuessResponseViewModel
-        {
-            MaskedWord = game.Word,
-            AttemptsRemaining = game.RemainingGuesses,
-            Guesses = game.IncorrectGuesses,
-            Status = game.Status.ToString()
-        };
-        return Ok(response);
+        return Ok(_mapper.Map<MakeGuessResponseViewModel>(game));
     }
 
     [HttpPut("{gameId:guid}")]
@@ -91,7 +71,7 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
             });
         }
         
-        var game = RetrieveGame(gameId);
+        var game = _gameService.GetGame(gameId);
         if (game == null)
         {
             return NotFound(new ResponseErrorViewModel
@@ -124,24 +104,14 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
             });
         }
         
-        var guessedLetter = guessViewModel.Letter.ToLower();
-        ProcessGuess(game, guessedLetter);
-        
-        var response = new MakeGuessResponseViewModel
-        {
-            MaskedWord = game.Word,
-            AttemptsRemaining = game.RemainingGuesses,
-            Guesses = game.IncorrectGuesses,
-            Status = game.Status.ToString()
-        };
-        
-        return Ok(response);
+        var guessResponse = _gameService.MakeGuess(gameId, _mapper.Map<GuessDto>(guessViewModel));
+        return Ok(_mapper.Map<MakeGuessResponseViewModel>(guessResponse));
     }
     
     [HttpGet("{gameId:guid}/cheat")]
     public ActionResult<string> Cheat([FromRoute] Guid gameId)
     {
-        var game = RetrieveGame(gameId);
+        var game = _gameService.GetGame(gameId);
         if (game == null)
         {
             return NotFound(new ResponseErrorViewModel
@@ -164,7 +134,7 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
     [HttpDelete("{gameId:guid}")]
     public IActionResult DeleteGame([FromRoute] Guid gameId)
     {
-        var game = RetrieveGame(gameId);
+        var game = _gameService.GetGame(gameId);
         if (game == null)
         {
             return NotFound(new ResponseErrorViewModel
@@ -180,52 +150,8 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
                 ]
             });
         }
-
-        Games.Remove(gameId);
-        return NoContent();
-    }
-
-    private static GameViewModel? RetrieveGame(Guid gameId)
-    {
-        return Games.GetValueOrDefault(gameId);
-    }
-
-    private static async Task<string> RetrieveWord(string language)
-    {
-        using var httpClient = new HttpClient();
-        var response = await httpClient.GetStringAsync($"https://random-word-api.herokuapp.com/word?lang={language}&length=7");
-        var words = System.Text.Json.JsonSerializer.Deserialize<List<string>>(response);
-        return words?.FirstOrDefault() ?? "defaultword";
-    }
-    
-    private void ProcessGuess(GameViewModel game, string guessedLetter)
-    {
-        var unmaskedWord = game.UnmaskedWord!.ToLower();
-        var maskedWord = game.Word!.ToCharArray();
-        var correctGuess = false;
-
-        for (var i = 0; i < unmaskedWord.Length; i++)
-        {
-            if (unmaskedWord[i] != guessedLetter[0]) continue;
-            maskedWord[i] = unmaskedWord[i];
-            correctGuess = true;
-        }
-
-        game.Word = new string(maskedWord);
-
-        if (!correctGuess)
-        {
-            game.IncorrectGuesses.Add(guessedLetter);
-            game.RemainingGuesses--;
-        }
-
-        if (game.Word == game.UnmaskedWord)
-        {
-            game.Status = GameStatuses.GameWon;
-        }
-        else if (game.RemainingGuesses == 0)
-        {
-            game.Status = GameStatuses.GameLost;
-        }
+        
+        var deleted = _gameService.DeleteGame(gameId);
+        return deleted ? NoContent() : NotFound();
     }
 }

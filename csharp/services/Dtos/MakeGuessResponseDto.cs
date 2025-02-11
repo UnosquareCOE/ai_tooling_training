@@ -1,6 +1,6 @@
-namespace api.ViewModels;
+namespace services.Dtos;
     
-    public class MakeGuessResponseViewModel
+    public class MakeGuessResponseDto
     {
         public string? MaskedWord { get; set; }
         public int AttemptsRemaining { get; set; }
