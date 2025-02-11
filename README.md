@@ -170,6 +170,8 @@ For this exercise we recommend using [Postman](https://www.postman.com/downloads
 
 NOTE: If interested additional tutorials for postman general usage and additionally around using `Postbot` to build API Tests, guidance can be found [here](https://learning.postman.com/)
 
+Additionally there is a postman collection available at [here](tests/postman.api.json), this postman collection will also be executed via newman within github action on pull request creation.
+
 ## Suggestions
 In additional to the requirements, in order to demonstrate additional value with Copilot, there are some additional suggestions to try below:
 - Retrieve words from an external API, for example: https://random-word-api.herokuapp.com/word?lang=en 
