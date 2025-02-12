@@ -1,5 +1,9 @@
 import { Response, Request } from "express";
 import { v4 as uuid } from "uuid";
+import { STATUS } from "../constants/status";
+import { LANGUAGES } from "../constants/languages";
+import { MESSAGE } from "../constants/message";
+import { clearUnmaskedWord } from "../utils/clear-unmasked-word";
 
 const games = {};
 const guessRegex = /[a-zA-Z0-9]/g;
@@ -8,32 +12,34 @@ async function getWordsFromExternalApi(language: string) {
   const words = response?.headers.get('server');
   return words;
 }
+
 async function createGame (req: Request, res: Response)  {
-  const newGameWord = await getWordsFromExternalApi("en")  
+  const newGameWord = await getWordsFromExternalApi(LANGUAGES.ENGLISH)  
   const newGameId = uuid();
   games[newGameId] = {
     unmaskedWord: newGameWord,
     word: (await newGameWord).replaceAll(guessRegex, "_"),
-    status: "In Progress",
+    status: STATUS.IN_PROGRESS,
     incorrectGuesses: [],
     guesses: [],
   };
 
-  res.status(201).send({
+  res.status(200).send({
     gameId: newGameId,
     maskedWord: games[newGameId].word,
-    attemptsRemaining: games[newGameId].remainingGuesses,
+    incorrectGuesses: games[newGameId].remainingGuesses,
   });
 }
 
 function getGame(req: Request, res: Response) {
-  const { gameId } = req.params;
+  const gameId = req.params.gameId;
   const game = retrieveGame(gameId);
-
-  if (game.status === "no guesses left") {
-    res.status(200).json({
-      status: "game over",
-    });
+if(!game) {
+  res.status(404).json(MESSAGE.GAME_NOT_FOUND)
+  return;
+}
+  if (game?.status === STATUS.NO_STATUS_LEFT) {
+    res.status(200).json({ status: STATUS.GAME_OVER });
     return;
   }
 
@@ -41,88 +47,50 @@ function getGame(req: Request, res: Response) {
 }
 
 function makeGuess(req: Request, res: Response) {
-  const { gameId } = req.params;
+  const gameId = req.params.gameId;
   const { letter } = req.body;
-
-  if (!letter || letter.length !== 1) {
-    res.status(400).json({
-      message: "Letter cannot accept more than 1 character",
-    });
-    return;
+  const game = retrieveGame(gameId);
+  if (!game) {
+     res.status(404).json({ message: MESSAGE.GAME_NOT_FOUND });
+     return;
   }
 
-  const game = retrieveGame(gameId);
-  const word = game.word;
-  const unmaskedWord = game.unmaskedWord;
+  if (!letter || letter.length !== 1) {
+     res.status(400).json({ message: MESSAGE.MORE_THAN_ONE_LETTER });
+     return;
+  }
+
+
+
+  const isLetterInWord = game.unmaskedWord.includes(letter);
+
+  if (isLetterInWord) {
+    game.word = game.unmaskedWord
+      .split('')
+      .map((char, i) => (char === letter ? letter : game.word[i]))
+      .join('');
+  } else {
+    game.incorrectGuesses.push(letter);
+
+    if (game.incorrectGuesses.length >= 5) {
+      game.status = STATUS.LOST;
+    }
+  }
 
   game.guesses.push(letter);
 
-  if (!isValidGuess(letter)) {
-    res.status(400).json({
-      message: "Cannot process guess",
-      errors: [
-        {
-          field: "letter",
-          message: "Letter cannot accept more than 1 character",
-        },
-      ],
-    });
-    return;
-  }
-
-  if (typeof unmaskedWord === "string" && unmaskedWord.includes(letter)) {
-    let newWord = "";
-    for (let i = 0; i < unmaskedWord.length; i++) {
-      if (unmaskedWord[i] === letter) {
-        newWord += letter;
-      } else {
-        newWord += word[i];
-      }
-    }
-    game.word = newWord;
-  } else {
-    game.incorrectGuesses.push(letter);
-    game.remainingGuesses -= 1;
-
-    if (game.remainingGuesses <= 0) {
-      game.status = "game over";
-      delete games[gameId];
-    }
-  }
-
-  if (game.status === "game over") {
-    res.status(200).json({
-      status: "game over",
-    });
-    return;
-  }
-
   if (game.word === game.unmaskedWord) {
-    game.status = "congrats you won";
-    res.status(200).json({
-      gameId,
-      unmaskedWord,
-      status: "won",
-    });
-    return;
+    game.status = STATUS.WON;
   }
-  res.status(200).json(clearUnmaskedWord(game));
+
+   res.status(200).json(clearUnmaskedWord(game));
+
 }
 
 const retrieveGame = (gameId: string) => {
-  if (!games[gameId]) {
-    throw new Error("Game not found or already deleted");
-  }
-  return games[gameId];
+  return games[gameId] || null; 
 };
 
-const clearUnmaskedWord = (game: any) => {
-  const withoutUnmasked = {
-    ...game,
-  };
-  delete withoutUnmasked.unmaskedWord;
-  return withoutUnmasked;
-};
 function deleteGame(req: Request, res: Response) {
   const { gameId } = req.params;
 
@@ -131,11 +99,11 @@ function deleteGame(req: Request, res: Response) {
     return;
   }
 
-  delete games[gameId];
-  res.status(204).send();
-  return; // Add this line to return void
+  delete games[gameId]; 
+
+  res.status(204);
 }
-const isValidGuess = (guess: string) => guess.length === 1;
+
 
 const GamesController = {
   createGame,
