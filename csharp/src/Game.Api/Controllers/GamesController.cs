@@ -20,17 +20,50 @@ namespace api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Guid>> CreateGame([FromBody] CreateGameRequestModel requestModel)
+        public async Task<ActionResult<CreateGameViewModel>> CreateGame([FromBody] CreateGameRequestModel requestModel)
         {
-            var newGameId = await _gameService.CreateGame(requestModel.Language);
-            var gameDto = _gameService.GetGame(newGameId);
-            var response = _mapper.Map<CreateGameViewModel>(gameDto);
+            try
+            {
+                var newGameId = await _gameService.CreateGame(requestModel.Language);
+                var gameDto = _gameService.GetGame(newGameId);
+                var response = _mapper.Map<CreateGameViewModel>(gameDto);
 
-            return Ok(response);
+                return Ok(response);
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new ResponseErrorViewModel
+                {
+                    Message = "Failed to retrieve word from external API",
+                    Errors = new List<ResponseErrorDetailViewModel>
+                    {
+                        new ResponseErrorDetailViewModel
+                        {
+                            Field = "externalApi",
+                            Message = ex.Message
+                        }
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorViewModel
+                {
+                    Message = "An unexpected error occurred",
+                    Errors = new List<ResponseErrorDetailViewModel>
+                    {
+                        new ResponseErrorDetailViewModel
+                        {
+                            Field = "server",
+                            Message = ex.Message
+                        }
+                    }
+                });
+            }
         }
 
         [HttpGet("{gameId:guid}")]
-        public ActionResult<GameViewModel> GetGame([FromRoute] Guid gameId)
+        public ActionResult<CheckGameStatusViewModel> GetGame([FromRoute] Guid gameId)
         {
             var gameDto = _gameService.GetGame(gameId);
             if (gameDto == null)
@@ -38,14 +71,14 @@ namespace api.Controllers
                 return NotFound(new ResponseErrorViewModel
                 {
                     Message = "Game not found",
-                    Errors =
-                    [
+                    Errors = new List<ResponseErrorDetailViewModel>
+                    {
                         new ResponseErrorDetailViewModel
                         {
                             Field = "gameId",
                             Message = "The specified game ID does not exist."
                         }
-                    ]
+                    }
                 });
             }
 
@@ -61,14 +94,14 @@ namespace api.Controllers
                 return BadRequest(new ResponseErrorViewModel
                 {
                     Message = "Cannot process guess",
-                    Errors =
-                    [
+                    Errors = new List<ResponseErrorDetailViewModel>
+                    {
                         new ResponseErrorDetailViewModel
                         {
                             Field = "letter",
                             Message = "Letter cannot accept more than 1 character"
                         }
-                    ]
+                    }
                 });
             }
 
@@ -93,14 +126,14 @@ namespace api.Controllers
                 return NotFound(new ResponseErrorViewModel
                 {
                     Message = "Game not found",
-                    Errors =
-                    [
+                    Errors = new List<ResponseErrorDetailViewModel>
+                    {
                         new ResponseErrorDetailViewModel
                         {
                             Field = "gameId",
                             Message = "The specified game ID does not exist."
                         }
-                    ]
+                    }
                 });
             }
 
