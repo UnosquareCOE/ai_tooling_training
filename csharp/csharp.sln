@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "services", "src\services\se
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "services.test", "test\services\services.test.csproj", "{3CE571C8-A966-43C2-983C-8D2513648D84}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dal", "src\dal\dal.csproj", "{B29316E5-4D0A-4692-8A69-2025FF3C184E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{3CE571C8-A966-43C2-983C-8D2513648D84}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3CE571C8-A966-43C2-983C-8D2513648D84}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3CE571C8-A966-43C2-983C-8D2513648D84}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B29316E5-4D0A-4692-8A69-2025FF3C184E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B29316E5-4D0A-4692-8A69-2025FF3C184E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B29316E5-4D0A-4692-8A69-2025FF3C184E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B29316E5-4D0A-4692-8A69-2025FF3C184E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

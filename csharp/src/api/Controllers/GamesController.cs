@@ -29,9 +29,9 @@ public class GamesController : ControllerBase
     }
 
     [HttpGet("{gameId:guid}")]
-    public ActionResult<GameViewModel> GetGame([FromRoute] Guid gameId)
+    public async Task<ActionResult<GameViewModel>> GetGame([FromRoute] Guid gameId)
     {
-        var game = _gameService.GetGame(gameId);
+        var game = await _gameService.GetGame(gameId);
         if (game == null)
         {
             return NotFound(new ResponseErrorViewModel
@@ -51,7 +51,7 @@ public class GamesController : ControllerBase
     }
 
     [HttpPut("{gameId:guid}")]
-    public ActionResult<MakeGuessResponseViewModel> MakeGuess([FromRoute] Guid gameId, [FromBody] GuessViewModel guessViewModel)
+    public async Task<ActionResult<MakeGuessResponseViewModel>> MakeGuess([FromRoute] Guid gameId, [FromBody] GuessViewModel guessViewModel)
     {
         if (string.IsNullOrWhiteSpace(guessViewModel.Letter) || guessViewModel.Letter?.Length != 1)
         {
@@ -69,7 +69,7 @@ public class GamesController : ControllerBase
             });
         }
         
-        var game = _gameService.GetGame(gameId);
+        var game = await _gameService.GetGame(gameId);
         if (game == null)
         {
             return NotFound(new ResponseErrorViewModel
@@ -102,15 +102,15 @@ public class GamesController : ControllerBase
             });
         }
         
-        var guessResponse = _gameService.MakeGuess(gameId, _mapper.Map<GuessDto>(guessViewModel));
+        var guessResponse = await _gameService.MakeGuess(gameId, _mapper.Map<GuessDto>(guessViewModel));
         return Ok(_mapper.Map<MakeGuessResponseViewModel>(guessResponse));
     }
     
     [HttpGet("{gameId:guid}/cheat")]
     public ActionResult<string> Cheat([FromRoute] Guid gameId)
     {
-        var game = _gameService.GetGame(gameId);
-        if (game == null)
+        var word = _gameService.Cheat(gameId);
+        if (word == null)
         {
             return NotFound(new ResponseErrorViewModel
             {
@@ -126,13 +126,13 @@ public class GamesController : ControllerBase
             });
         }
 
-        return Ok(game.UnmaskedWord);
+        return Ok(word);
     }
     
     [HttpDelete("{gameId:guid}")]
-    public IActionResult DeleteGame([FromRoute] Guid gameId)
+    public async Task<IActionResult> DeleteGame([FromRoute] Guid gameId)
     {
-        var game = _gameService.GetGame(gameId);
+        var game = await _gameService.GetGame(gameId);
         if (game == null)
         {
             return NotFound(new ResponseErrorViewModel
@@ -149,7 +149,7 @@ public class GamesController : ControllerBase
             });
         }
         
-        var deleted = _gameService.DeleteGame(gameId);
+        var deleted = await _gameService.DeleteGame(gameId);
         return deleted ? NoContent() : NotFound();
     }
 }

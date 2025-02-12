@@ -5,8 +5,8 @@ namespace services.Interfaces;
 public interface IGameService
 {
     Task<CreateGameResponseDto> CreateGame(CreateGameRequestDto request);
-    GameDto? GetGame(Guid gameId);
-    MakeGuessResponseDto? MakeGuess(Guid gameId, GuessDto guessDto);
-    string? Cheat(Guid gameId);
-    bool DeleteGame(Guid gameId);
+    Task<GameDto?> GetGame(Guid gameId);
+    Task<MakeGuessResponseDto?> MakeGuess(Guid gameId, GuessDto guessDto);
+    Task<string?> Cheat(Guid gameId);
+    Task<bool> DeleteGame(Guid gameId);
 }

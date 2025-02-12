@@ -1,5 +1,7 @@
 using System.Text.RegularExpressions;
 using AutoMapper;
+using dal.Interfaces;
+using dal.Models;
 using services.Constants;
 using services.Dtos;
 using services.Interfaces;
@@ -8,67 +10,67 @@ namespace services.Services;
 
 public partial class GameService : IGameService
 {
-    //Temporary public access for unit tests
-    public static readonly Dictionary<Guid, GameDto> Games = new();
     private readonly IMapper _mapper;
+    private readonly IGameContext _gameContext;
 
-    public GameService(IMapper mapper)
+    public GameService(IMapper mapper, IGameContext gameContext)
     {
         _mapper = mapper;
+        _gameContext = gameContext;
     }
 
     public async Task<CreateGameResponseDto> CreateGame(CreateGameRequestDto request)
     {
         var newGameId = Guid.NewGuid();
         var newGameWord = await RetrieveWord(request.Language);
-
-        var newGame = new GameDto
+        var newGame = new Game
         {
+            Id = newGameId,
             RemainingGuesses = 5,
             UnmaskedWord = newGameWord,
             Word = GuessRegex().Replace(newGameWord, "_"),
             Status = GameStatuses.InProgress,
             IncorrectGuesses = []
         };
-
-        Games.Add(newGameId, newGame);
-
+        _gameContext.Games.Add(newGame);
         var response = _mapper.Map<CreateGameResponseDto>(newGame);
         response.GameId = newGameId;
+        await _gameContext.SaveChangesAsync();
         return response;
     }
 
-    public GameDto? GetGame(Guid gameId)
+    public async Task<GameDto?> GetGame(Guid gameId)
     {
-        return Games.GetValueOrDefault(gameId);
+        var game = await _gameContext.Games.FindAsync(gameId);
+        return game == null ? null : _mapper.Map<GameDto>(game);
     }
 
-    public MakeGuessResponseDto? MakeGuess(Guid gameId, GuessDto guessViewModel)
+    public async Task<MakeGuessResponseDto?> MakeGuess(Guid gameId, GuessDto guessViewModel)
     {
-        var game = GetGame(gameId);
+        var game = await _gameContext.Games.FindAsync(gameId);
         if (game == null) return null;
-
+        
         var guessedLetter = guessViewModel.Letter!.ToLower();
         ProcessGuess(game, guessedLetter);
-
+        await _gameContext.SaveChangesAsync();
         return _mapper.Map<MakeGuessResponseDto>(game);
     }
 
-    public string? Cheat(Guid gameId)
+    public async Task<string?> Cheat(Guid gameId)
     {
-        var game = GetGame(gameId);
+        var game = await _gameContext.Games.FindAsync(gameId);
         return game?.UnmaskedWord;
     }
 
-    public bool DeleteGame(Guid gameId)
+    public async Task<bool> DeleteGame(Guid gameId)
     {
-        var game = GetGame(gameId);
+        var game = await _gameContext.Games.FindAsync(gameId);
         if (game == null)
         {
             return false;
         }
-
-        Games.Remove(gameId);
+        _gameContext.Games.Remove(game);
+        await _gameContext.SaveChangesAsync();
         return true;
     }
 
@@ -80,7 +82,7 @@ public partial class GameService : IGameService
         return words?.FirstOrDefault() ?? "default";
     }
 
-    private static void ProcessGuess(GameDto game, string guessedLetter)
+    private static void ProcessGuess(Game game, string guessedLetter)
     {
         var unmaskedWord = game.UnmaskedWord!.ToLower();
         var maskedWord = game.Word!.ToCharArray();
