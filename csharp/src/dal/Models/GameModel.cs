@@ -6,7 +6,7 @@ namespace dal
     {
         public Guid Id { get; set; }
         public string Word { get; set; }
-        public List<char> Guesses { get; set; } = [];
+        public List<char> Guesses { get; set; } = new List<char>();
         public string Status { get; set; }
     }
 }

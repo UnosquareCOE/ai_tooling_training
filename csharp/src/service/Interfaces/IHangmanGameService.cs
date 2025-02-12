@@ -9,7 +9,6 @@ namespace service.interfaces
         GameDto CreateGame();
         GameDto? GetGameById(Guid id);
         GameDto? MakeGuess(Guid gameId, char letter);
-        List<GameDto> GetAllGames();
         Guid? ClearGame(Guid gameId);
     }
 }

@@ -2,7 +2,7 @@ using service.interfaces;
 
 namespace service.services;
 
-public class IdentifierGenerator : IIdentifierGenerator
+public class IdentifierGeneratorService : IIdentifierGenerator
 {
     public Guid RetrieveIdentifier()
     {

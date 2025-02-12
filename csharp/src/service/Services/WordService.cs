@@ -17,7 +17,7 @@ namespace service.services
             _useOfflineMode = mode.Equals(Connectivity.Offline, StringComparison.OrdinalIgnoreCase);
         }
 
-        public async Task<string> RetrieveWord()
+        public string RetrieveWord()
         {
             if (_useOfflineMode)
             {
@@ -25,7 +25,7 @@ namespace service.services
             }
             else
             {
-                return await RetrieveWordOnline();
+                return RetrieveWordOnline();
             }
         }
 
@@ -34,11 +34,11 @@ namespace service.services
             return _words[new Random().Next(0, _words.Length)];
         }
 
-        private async Task<string> RetrieveWordOnline()
+        public string RetrieveWordOnline()
         {
             using (var client = new HttpClient())
             {
-                var response = await client.GetStringAsync("https://random-word-api.herokuapp.com/word?lang=en");
+                var response = client.GetStringAsync("https://random-word-api.herokuapp.com/word?lang=en").Result;
                 return response;
             }
         }

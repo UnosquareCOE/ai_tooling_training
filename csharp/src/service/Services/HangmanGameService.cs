@@ -46,8 +46,12 @@ public class HangmanGameService : IHangmanGameService
         var game = _context.Games.FirstOrDefault(g => g.Id == gameId);
         if (game == null) return null;
 
-        game.Guesses.Add(letter);
+        if (game.Guesses.Contains(letter))
+        {
+            throw new Exception("Letter already guessed");
+        }
 
+        game.Guesses.Add(letter);
 
         var uniqueWordLetters = game.Word.Distinct().ToList();
 
@@ -76,11 +80,5 @@ public class HangmanGameService : IHangmanGameService
             return gameId;
         }
         return null;
-    }
-
-    public List<GameDto> GetAllGames()
-    {
-        var games = _context.Games.ToList();
-        return _mapper.Map<List<GameDto>>(games);
     }
 }

@@ -6,7 +6,7 @@ using service.services;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddScoped<AppDbContext>();
-builder.Services.AddTransient<IIdentifierGenerator, IdentifierGenerator>();
+builder.Services.AddTransient<IIdentifierGenerator, IdentifierGeneratorService>();
 builder.Services.AddTransient<IWordService, WordService>();
 builder.Services.AddScoped<IHangmanGameService, HangmanGameService>();
 

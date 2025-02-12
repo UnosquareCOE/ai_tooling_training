@@ -1,4 +1,4 @@
-namespace YourNamespace.ViewModels
+namespace api.ViewModels
 {
     public class CheckGameViewModel
     {

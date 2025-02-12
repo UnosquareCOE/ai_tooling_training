@@ -66,14 +66,24 @@ public partial class GamesController(IHangmanGameService gameService, IMapper ma
             return BadRequest(guidErrorResponse);
         }
 
-        var dto = gameService.MakeGuess(gameId, guessViewModel.Letter!.Value);
-        if (dto == null)
+        try
         {
-            return NotFound();
-        }
+            var dto = gameService.MakeGuess(gameId, guessViewModel.Letter!.Value);
+            if (dto == null)
+            {
+                return NotFound();
+            }
 
-        var result = mapper.Map<CheckGameViewModel>(dto);
-        return Ok(result);
+            var result = mapper.Map<CheckGameViewModel>(dto);
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(new ResponseErrorViewModel
+            {
+                Message = e.Message
+            });
+        }
     }
 
     [HttpDelete("{gameId}")]
