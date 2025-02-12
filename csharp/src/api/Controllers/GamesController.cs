@@ -1,67 +1,155 @@
-using System.Text.RegularExpressions;
 using api.ViewModels;
-using api.Utils;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using services.Constants;
+using services.Dtos;
+using services.Interfaces;
+using ResponseErrorDetailViewModel = api.ViewModels.ResponseErrorDetailViewModel;
 
 namespace api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public partial class GamesController(IIdentifierGenerator identifierGenerator) : ControllerBase
+public class GamesController : ControllerBase
 {
-    private static readonly Dictionary<Guid, GameViewModel> Games = new();
-    private readonly string[] _words = ["banana", "canine", "unosquare", "airport"];
-
-    [GeneratedRegex(@"[a-zA-Z0-9_]")]
-    private static partial Regex GuessRegex();
+    private readonly IGameService _gameService;
+    private readonly IMapper _mapper;
+    
+    public GamesController(IMapper mapper, IGameService gameService)
+    {
+        (_mapper, _gameService) = (mapper, gameService);
+    }
 
     [HttpPost]
-    public ActionResult<Guid> CreateGame()
+    public async Task<ActionResult<Guid>> CreateGame([FromBody] CreateGameRequestViewModel? request)
     {
-        var newGameWord = RetrieveWord();
-        var newGameId = identifierGenerator.RetrieveIdentifier();
-
-        Games.Add(newGameId, new GameViewModel
-        {
-            RemainingGuesses = 3,
-            UnmaskedWord = newGameWord,
-            Word = GuessRegex().Replace(newGameWord, "_"),
-            Status = "In Progress",
-            IncorrectGuesses = []
-        });
-
-        return Ok(newGameId);
+        request ??= new CreateGameRequestViewModel(language: "en");
+        var newGameResponseDto = await _gameService.CreateGame(_mapper.Map<CreateGameRequestDto>(request));
+        return Ok(_mapper.Map<CreateGameResponseViewModel>(newGameResponseDto));
     }
 
     [HttpGet("{gameId:guid}")]
-    public ActionResult<GameViewModel> GetGame([FromRoute] Guid gameId)
+    public async Task<ActionResult<GameViewModel>> GetGame([FromRoute] Guid gameId)
     {
-        var game = RetrieveGame(gameId);
-        return Ok(game);
+        var game = await _gameService.GetGame(gameId);
+        if (game == null)
+        {
+            return NotFound(new ResponseErrorViewModel
+            {
+                Message = "Game not found",
+                Errors =
+                [
+                    new ResponseErrorDetailViewModel
+                    {
+                        Field = "gameId",
+                        Message = "The specified game ID does not exist."
+                    }
+                ]
+            });
+        }
+        return Ok(_mapper.Map<MakeGuessResponseViewModel>(game));
     }
 
     [HttpPut("{gameId:guid}")]
-    public ActionResult<GameViewModel> MakeGuess([FromRoute] Guid gameId, [FromBody] GuessViewModel guessViewModel)
+    public async Task<ActionResult<MakeGuessResponseViewModel>> MakeGuess([FromRoute] Guid gameId, [FromBody] GuessViewModel guessViewModel)
     {
         if (string.IsNullOrWhiteSpace(guessViewModel.Letter) || guessViewModel.Letter?.Length != 1)
         {
             return BadRequest(new ResponseErrorViewModel
             {
-                Message = "Letter cannot accept more than 1 character"
+                Message = "Cannot process guess",
+                Errors =
+                [
+                    new ResponseErrorDetailViewModel
+                    {
+                        Field = "letter",
+                        Message = "Letter cannot accept more than 1 character"
+                    }
+                ]
             });
         }
         
-        var game = RetrieveGame(gameId);
-        return Ok(game);
+        var game = await _gameService.GetGame(gameId);
+        if (game == null)
+        {
+            return NotFound(new ResponseErrorViewModel
+            {
+                Message = "Game not found",
+                Errors =
+                [
+                    new ResponseErrorDetailViewModel
+                    {
+                        Field = "gameId",
+                        Message = "The specified game ID does not exist."
+                    }
+                ]
+            });
+        }
+        
+        if (game.RemainingGuesses == 0 || game.Status != GameStatuses.InProgress)
+        {
+            return BadRequest(new ResponseErrorViewModel
+            {
+                Message = "Cannot process guess",
+                Errors =
+                [
+                    new ResponseErrorDetailViewModel
+                    {
+                        Field = "gameId",
+                        Message = "The game is not in progress."
+                    }
+                ]
+            });
+        }
+        
+        var guessResponse = await _gameService.MakeGuess(gameId, _mapper.Map<GuessDto>(guessViewModel));
+        return Ok(_mapper.Map<MakeGuessResponseViewModel>(guessResponse));
     }
-
-    private static GameViewModel? RetrieveGame(Guid gameId)
+    
+    [HttpGet("{gameId:guid}/cheat")]
+    public ActionResult<string> Cheat([FromRoute] Guid gameId)
     {
-        return Games.GetValueOrDefault(gameId);
+        var word = _gameService.Cheat(gameId);
+        if (word == null)
+        {
+            return NotFound(new ResponseErrorViewModel
+            {
+                Message = "Game not found",
+                Errors =
+                [
+                    new ResponseErrorDetailViewModel
+                    {
+                        Field = "gameId",
+                        Message = "The specified game ID does not exist."
+                    }
+                ]
+            });
+        }
+
+        return Ok(word);
     }
-
-    private string RetrieveWord()
+    
+    [HttpDelete("{gameId:guid}")]
+    public async Task<IActionResult> DeleteGame([FromRoute] Guid gameId)
     {
-        return _words[new Random().Next(3, _words.Length - 1)];
+        var game = await _gameService.GetGame(gameId);
+        if (game == null)
+        {
+            return NotFound(new ResponseErrorViewModel
+            {
+                Message = "Game not found",
+                Errors =
+                [
+                    new ResponseErrorDetailViewModel
+                    {
+                        Field = "gameId",
+                        Message = "The specified game ID does not exist."
+                    }
+                ]
+            });
+        }
+        
+        var deleted = await _gameService.DeleteGame(gameId);
+        return deleted ? NoContent() : NotFound();
     }
 }

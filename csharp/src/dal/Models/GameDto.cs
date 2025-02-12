@@ -1,14 +1,11 @@
-using System.Text.Json.Serialization;
+namespace dal.Models;
 
-namespace api.ViewModels;
-
-public class GameViewModel
+public class Game
 {
+    public Guid Id { get; set; }
     public int RemainingGuesses { get; set; }
     public string? Word { get; set; }
-
-    [JsonIgnore] public string? UnmaskedWord { get; set; }
-
+    public string? UnmaskedWord { get; set; }
     public List<string> IncorrectGuesses { get; set; } = [];
     public required string Status { get; set; }
 }
