@@ -90,9 +90,17 @@ namespace Game.Services.Services
             };
         }
 
-        public void DeleteGame(Guid gameId)
+        public bool DeleteGame(Guid gameId)
         {
+            var game = GetGame(gameId);
+            if (game == null)
+            {
+                return false;
+            }
+
             Games.Remove(gameId);
+            return true;
+            
         }
 
         private string RetrieveWord()

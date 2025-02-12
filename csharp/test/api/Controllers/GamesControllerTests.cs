@@ -54,7 +54,7 @@ public class GamesControllerTests
 
         var response = _gamesController.CreateGame();
 
-        var result = Assert.IsType<CreatedAtActionResult>(response.Result);
+        var result = Assert.IsType<OkObjectResult>(response.Result);
         var model = Assert.IsType<CreateGameViewModel>(result.Value);
         Assert.Equal(newGameId, model.GameId);
         Assert.Equal(5, model.AttemptsRemaining);
@@ -114,13 +114,12 @@ public class GamesControllerTests
         var response = _gamesController.MakeGuess(gameId, guessViewModel);
 
         var result = Assert.IsType<BadRequestObjectResult>(response.Result);
-        var value = result.Value;
+        var value = Assert.IsType<ResponseErrorViewModel>(result.Value);
 
-        var messageProperty = value.GetType().GetProperty("message");
-        Assert.NotNull(messageProperty);
-
-        var message = messageProperty.GetValue(value) as string;
-        Assert.Equal("Cannot process guess", message);
+        Assert.Equal("Cannot process guess", value.Message);
+        Assert.Single(value.Errors);
+        Assert.Equal("letter", value.Errors[0].Field);
+        Assert.Equal("Letter cannot accept more than 1 character", value.Errors[0].Message);
     }
 
     [Fact]
@@ -132,7 +131,7 @@ public class GamesControllerTests
 
         var response = _gamesController.DeleteGame(gameId);
 
-        Assert.IsType<NoContentResult>(response);
+        Assert.IsType<NotFoundObjectResult>(response);
     }
 
     [Fact]
@@ -144,6 +143,6 @@ public class GamesControllerTests
 
         var response = _gamesController.DeleteGame(gameId);
 
-        Assert.IsType<NotFoundResult>(response);
+        Assert.IsType<NotFoundObjectResult>(response);
     }
 }

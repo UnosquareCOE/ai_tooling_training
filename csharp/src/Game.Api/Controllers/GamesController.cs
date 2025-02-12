@@ -25,7 +25,7 @@ namespace api.Controllers
             var gameDto = _gameService.GetGame(newGameId);
             var response = _mapper.Map<CreateGameViewModel>(gameDto);
 
-            return CreatedAtAction(nameof(GetGame), new { gameId = newGameId }, response);
+            return Ok(response);
         }
 
         [HttpGet("{gameId:guid}")]
@@ -34,7 +34,18 @@ namespace api.Controllers
             var gameDto = _gameService.GetGame(gameId);
             if (gameDto == null)
             {
-                return NotFound();
+                return NotFound(new ResponseErrorViewModel
+                {
+                    Message = "Game not found",
+                    Errors =
+                    [
+                        new ResponseErrorDetailViewModel
+                        {
+                            Field = "gameId",
+                            Message = "The specified game ID does not exist."
+                        }
+                    ]
+                });
             }
 
             var response = _mapper.Map<CheckGameStatusViewModel>(gameDto);
@@ -46,13 +57,17 @@ namespace api.Controllers
         {
             if (string.IsNullOrWhiteSpace(guessViewModel.Letter) || guessViewModel.Letter?.Length != 1)
             {
-                return BadRequest(new
+                return BadRequest(new ResponseErrorViewModel
                 {
-                    message = "Cannot process guess",
-                    errors = new[]
-                    {
-                        new { field = "letter", message = "Letter cannot accept more than 1 character" }
-                    }
+                    Message = "Cannot process guess",
+                    Errors =
+                    [
+                        new ResponseErrorDetailViewModel
+                        {
+                            Field = "letter",
+                            Message = "Letter cannot accept more than 1 character"
+                        }
+                    ]
                 });
             }
 
@@ -71,15 +86,25 @@ namespace api.Controllers
         [HttpDelete("{gameId:guid}")]
         public IActionResult DeleteGame([FromRoute] Guid gameId)
         {
-            try
+            var game = _gameService.GetGame(gameId);
+            if (game == null)
             {
-                _gameService.DeleteGame(gameId);
-                return NoContent();
+                return NotFound(new ResponseErrorViewModel
+                {
+                    Message = "Game not found",
+                    Errors =
+                    [
+                        new ResponseErrorDetailViewModel
+                        {
+                            Field = "gameId",
+                            Message = "The specified game ID does not exist."
+                        }
+                    ]
+                });
             }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
+
+            var deleted = _gameService.DeleteGame(gameId);
+            return deleted ? NoContent() : NotFound();
         }
     }
 }

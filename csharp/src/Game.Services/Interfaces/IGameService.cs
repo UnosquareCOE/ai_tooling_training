@@ -7,6 +7,6 @@ namespace Game.Services.Interfaces
         Guid CreateGame();
         GameDto? GetGame(Guid gameId);
         MakeGuessDto MakeGuess(Guid gameId, string letter);
-        void DeleteGame(Guid gameId);
+        bool DeleteGame(Guid gameId);
     }
 }
