@@ -11,5 +11,5 @@ public class GameDto
     [JsonIgnore] public string? UnmaskedWord { get; set; }
 
     public List<string> IncorrectGuesses { get; set; } = [];
-    public GameStatuses Status { get; set; }
+    public required string Status { get; set; }
 }

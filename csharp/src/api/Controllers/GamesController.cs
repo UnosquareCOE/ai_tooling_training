@@ -21,8 +21,9 @@ public class GamesController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<CreateGameResponseViewModel>> CreateGame([FromBody] CreateGameRequestViewModel request)
+    public async Task<ActionResult<Guid>> CreateGame([FromBody] CreateGameRequestViewModel? request)
     {
+        request ??= new CreateGameRequestViewModel(language: "en");
         var newGameResponseDto = await _gameService.CreateGame(_mapper.Map<CreateGameRequestDto>(request));
         return Ok(_mapper.Map<CreateGameResponseViewModel>(newGameResponseDto));
     }
