@@ -1,53 +1,37 @@
-using System.Text.RegularExpressions;
 using api.ViewModels;
-using api.Utils;
 using Microsoft.AspNetCore.Mvc;
 using YourNamespace.ViewModels;
+using service.interfaces;
+using AutoMapper;
+using api.Validation;
 
 namespace api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public partial class GamesController(IIdentifierGenerator identifierGenerator) : ControllerBase
+public partial class GamesController(IHangmanGameService gameService, IMapper mapper) : ControllerBase
 {
-    private static readonly Dictionary<Guid, GameViewModel> Games = new();
-    private readonly string[] _words = ["banana", "canine", "unosquare", "airport"];
-
-    [GeneratedRegex(@"[a-zA-Z0-9_]")]
-    private static partial Regex GuessRegex();
 
     [HttpPost]
-    public ActionResult<CreateGameResponseViewModel> CreateGame()
+    public ActionResult<CreateGameViewModel> CreateGame()
     {
-        var newGameWord = RetrieveWord();
-        var newGameId = identifierGenerator.RetrieveIdentifier();
-
-        var gameViewModel = new GameViewModel
-        {
-            RemainingGuesses = 5,
-            UnmaskedWord = newGameWord,
-            Word = GuessRegex().Replace(newGameWord, "_"),
-            Status = "In Progress",
-            IncorrectGuesses = new List<string>()
-        };
-
-        Games.Add(newGameId, gameViewModel);
-
-        var response = new CreateGameResponseViewModel
-        {
-            GameId = newGameId,
-            MaskedWord = gameViewModel.Word,
-            AttemptsRemaining = gameViewModel.RemainingGuesses
-        };
-
-        return Ok(response);
+        var dto = gameService.CreateGame();
+        var result = mapper.Map<CreateGameViewModel>(dto);
+        return Ok(result);
     }
 
     [HttpGet("{gameId:guid}")]
-    public ActionResult<GameViewModel> GetGame([FromRoute] Guid gameId)
+    public ActionResult<CheckGameViewModel> GetGame([FromRoute] Guid gameId)
     {
-        var game = RetrieveGame(gameId);
-        if (game == null)
+        var guidErrorResponse = ValidationUtils.ValidateGuid(gameId);
+        if (guidErrorResponse != null)
+        {
+            return BadRequest(guidErrorResponse);
+        }
+
+        var dto = gameService.GetGameById(gameId);
+
+        if (dto == null)
         {
             return NotFound(new ResponseErrorViewModel
             {
@@ -63,147 +47,50 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
             });
         }
 
-        var checkGameViewModel = new CheckGameViewModel
-        {
-            MaskedWord = game.Word,
-            AttemptsRemaining = game.RemainingGuesses,
-            Status = game.Status,
-            Guesses = game.IncorrectGuesses
-        };
-
-        return Ok(checkGameViewModel);
+        var result = mapper.Map<CheckGameViewModel>(dto);
+        return Ok(result);
     }
 
     [HttpPut("{gameId:guid}")]
     public ActionResult<ProcessGameViewModel> MakeGuess([FromRoute] Guid gameId, [FromBody] GuessViewModel guessViewModel)
     {
-        if (string.IsNullOrWhiteSpace(guessViewModel.Letter) || guessViewModel.Letter?.Length != 1)
+        var validationResult = guessViewModel.Validate();
+        if (!validationResult.IsValid)
         {
-            return BadRequest(new ResponseErrorViewModel
-            {
-                Message = "Cannot process guess",
-                Errors = new List<ErrorDetail>
-                {
-                    new ErrorDetail
-                    {
-                        Field = "letter",
-                        Message = "Letter cannot accept more than 1 character"
-                    }
-                }
-            });
+            return BadRequest(ValidationUtils.CreateBadRequestResponse(validationResult));
         }
 
-        var game = RetrieveGame(gameId);
-        if (game == null)
+        var guidErrorResponse = ValidationUtils.ValidateGuid(gameId);
+        if (guidErrorResponse != null)
         {
-            return NotFound(new ResponseErrorViewModel
-            {
-                Message = "Cannot process guess",
-                Errors = new List<ErrorDetail>
-                {
-                    new ErrorDetail
-                    {
-                        Field = "gameId",
-                        Message = "Game not found"
-                    }
-                }
-            });
+            return BadRequest(guidErrorResponse);
         }
 
-        if (game.RemainingGuesses == 0)
+        var dto = gameService.MakeGuess(gameId, guessViewModel.Letter!.Value);
+        if (dto == null)
         {
-            return BadRequest(new ResponseErrorViewModel
-            {
-                Message = "Cannot process guess",
-                Errors = new List<ErrorDetail>
-                {
-                    new ErrorDetail
-                    {
-                        Field = "remainingGuesses",
-                        Message = "No attempts remaining"
-                    }
-                }
-            });
+            return NotFound();
         }
 
-        // Check if the letter has already been guessed
-        if (game.IncorrectGuesses.Contains(guessViewModel.Letter))
-        {
-            return BadRequest(new ResponseErrorViewModel
-            {
-                Message = "Cannot process guess",
-                Errors = new List<ErrorDetail>
-                {
-                    new ErrorDetail
-                    {
-                        Field = "letter",
-                        Message = "Letter already guessed"
-                    }
-                }
-            });
-        }
-
-        // if letter is in word, umask it from maskedWord
-        var maskedWord = game.Word.ToCharArray();
-        var unmaskedWord = game.UnmaskedWord.ToCharArray();
-        var letter = guessViewModel.Letter[0];
-        var letterFound = false;
-
-        for (int i = 0; i < unmaskedWord.Length; i++)
-        {
-            if (unmaskedWord[i] == letter)
-            {
-                maskedWord[i] = letter;
-                letterFound = true;
-            }
-        }
-
-        if (!letterFound)
-        {
-            game.RemainingGuesses--;
-            game.IncorrectGuesses.Add(letter.ToString());
-        }
-
-        game.Word = new string(maskedWord);
-
-        var status = game.RemainingGuesses > 0 ? "In Progress" : "Game Over";
-        if (!game.Word.Contains('_'))
-        {
-            status = "Won";
-        }
-
-        var processGameViewModel = new ProcessGameViewModel
-        {
-            MaskedWord = game.Word,
-            AttemptsRemaining = game.RemainingGuesses,
-            Guesses = game.IncorrectGuesses,
-            Status = status
-        };
-
-        return Ok(processGameViewModel);
+        var result = mapper.Map<CheckGameViewModel>(dto);
+        return Ok(result);
     }
 
     [HttpDelete("{gameId}")]
     public IActionResult ClearGame(Guid gameId)
     {
-        if (Games.ContainsKey(gameId))
+        var guidErrorResponse = ValidationUtils.ValidateGuid(gameId);
+        if (guidErrorResponse != null)
         {
-            Games.Remove(gameId);
-            return NoContent();
+            return BadRequest(guidErrorResponse);
         }
-        else
+
+        var removedGameId = gameService.ClearGame(gameId);
+        if (removedGameId == null)
         {
             return NotFound();
         }
-    }
-
-    private static GameViewModel? RetrieveGame(Guid gameId)
-    {
-        return Games.GetValueOrDefault(gameId);
-    }
-
-    private string RetrieveWord()
-    {
-        return _words[new Random().Next(0, _words.Length)];
+        return NoContent();
     }
 }
+

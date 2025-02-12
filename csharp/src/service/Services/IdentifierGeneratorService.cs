@@ -1,9 +1,6 @@
-namespace api.Utils;
+using service.interfaces;
 
-public interface IIdentifierGenerator
-{
-    Guid RetrieveIdentifier();
-}
+namespace service.services;
 
 public class IdentifierGenerator : IIdentifierGenerator
 {

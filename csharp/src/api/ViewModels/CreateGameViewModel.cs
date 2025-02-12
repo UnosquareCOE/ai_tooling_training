@@ -1,6 +1,6 @@
 namespace api.ViewModels
 {
-    public class CreateGameResponseViewModel
+    public class CreateGameViewModel
     {
         public Guid GameId { get; set; }
         public string MaskedWord { get; set; }

@@ -7,6 +7,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api", "src\api\api.csproj",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api.test", "test\api\api.test.csproj", "{73995B43-F980-4634-AE69-E64ACBF5D7C3}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{BB030460-31FC-4B95-951B-EFAB42602BA2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dal", "src\dal\dal.csproj", "{BBBAEDFC-2557-4808-AC4A-2DFC3DE92C28}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "service", "src\service\service.csproj", "{50819C7D-F671-42A1-9DAC-676BD333FC37}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +30,17 @@ Global
 		{73995B43-F980-4634-AE69-E64ACBF5D7C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{73995B43-F980-4634-AE69-E64ACBF5D7C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{73995B43-F980-4634-AE69-E64ACBF5D7C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBBAEDFC-2557-4808-AC4A-2DFC3DE92C28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBBAEDFC-2557-4808-AC4A-2DFC3DE92C28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBBAEDFC-2557-4808-AC4A-2DFC3DE92C28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBBAEDFC-2557-4808-AC4A-2DFC3DE92C28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{50819C7D-F671-42A1-9DAC-676BD333FC37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50819C7D-F671-42A1-9DAC-676BD333FC37}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50819C7D-F671-42A1-9DAC-676BD333FC37}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50819C7D-F671-42A1-9DAC-676BD333FC37}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BBBAEDFC-2557-4808-AC4A-2DFC3DE92C28} = {BB030460-31FC-4B95-951B-EFAB42602BA2}
+		{50819C7D-F671-42A1-9DAC-676BD333FC37} = {BB030460-31FC-4B95-951B-EFAB42602BA2}
 	EndGlobalSection
 EndGlobal
