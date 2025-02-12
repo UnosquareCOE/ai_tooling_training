@@ -1,4 +1,5 @@
 using api.Controllers;
+using api.RequestModels;
 using api.ViewModels;
 using AutoMapper;
 using Game.Services.Dto;
@@ -37,7 +38,7 @@ public class GamesControllerTests
     }
 
     [Fact]
-    public void CreateGame_WhenCalled_ReturnsCreatedAtActionResult()
+    public async Task CreateGame_WhenCalled_ReturnsCreatedAtActionResult()
     {
         var newGameId = Guid.NewGuid();
         var gameDto = new GameDto
@@ -49,10 +50,11 @@ public class GamesControllerTests
             IncorrectGuesses = new List<string>()
         };
 
-        _mockGameService.Setup(service => service.CreateGame()).Returns(newGameId);
+        _mockGameService.Setup(service => service.CreateGame(It.IsAny<string>())).ReturnsAsync(newGameId);
         _mockGameService.Setup(service => service.GetGame(newGameId)).Returns(gameDto);
 
-        var response = _gamesController.CreateGame();
+        var requestModel = new CreateGameRequestModel { Language = "en" };
+        var response = await _gamesController.CreateGame(requestModel);
 
         var result = Assert.IsType<OkObjectResult>(response.Result);
         var model = Assert.IsType<CreateGameViewModel>(result.Value);

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using AutoMapper;
 using Game.DAL.Enums;
 using Game.Services.Dto;
@@ -9,7 +10,6 @@ namespace Game.Services.Services
     public class GameService : IGameService
     {
         private static readonly Dictionary<Guid, GameDto> Games = new();
-        private readonly string[] _words = { "banana", "canine", "unosquare", "airport" };
         private readonly IIdentifierGenerator _identifierGenerator;
         private readonly IMapper _mapper;
 
@@ -19,9 +19,9 @@ namespace Game.Services.Services
             _mapper = mapper;
         }
 
-        public Guid CreateGame()
+        public async Task<Guid> CreateGame(string language)
         {
-            var newGameWord = RetrieveWord();
+            var newGameWord = await RetrieveWordFromApi(language);
             var newGameId = _identifierGenerator.RetrieveIdentifier();
 
             var maskedWord = RegexHelper.GuessRegex().Replace(newGameWord, "_");
@@ -102,15 +102,17 @@ namespace Game.Services.Services
             return true;
             
         }
-
-        private string RetrieveWord()
-        {
-            return _words[new Random().Next(0, _words.Length)];
-        }
-
         private static GameDto? RetrieveGame(Guid gameId)
         {
             return Games.GetValueOrDefault(gameId);
+        }
+        
+        private async Task<string> RetrieveWordFromApi(string language)
+        {
+            using var httpClient = new HttpClient();
+            var response = await httpClient.GetStringAsync($"https://random-word-api.herokuapp.com/word?lang={language}");
+            var words = JsonSerializer.Deserialize<List<string>>(response);
+            return words?.FirstOrDefault() ?? "defaultword";
         }
     }
 }

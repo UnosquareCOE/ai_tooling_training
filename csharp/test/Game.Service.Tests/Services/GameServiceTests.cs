@@ -29,27 +29,26 @@ namespace Game.Services.Tests.Services
         }
 
         [Fact]
-        public void CreateGame_ShouldReturnNewGameId()
+        public async Task CreateGame_ShouldReturnNewGameId()
         {
             // Arrange
             var newGameId = Guid.NewGuid();
             _mockIdentifierGenerator.Setup(generator => generator.RetrieveIdentifier()).Returns(newGameId);
 
             // Act
-            var result = _gameService.CreateGame();
+            var result = await _gameService.CreateGame("en");
 
             // Assert
             Assert.Equal(newGameId, result);
         }
 
         [Fact]
-        public void GetGame_ShouldReturnGameDto()
+        public async Task GetGame_ShouldReturnGameDto()
         {
             // Arrange
             var gameId = Guid.NewGuid();
             _mockIdentifierGenerator.Setup(generator => generator.RetrieveIdentifier()).Returns(gameId);
-            _gameService.CreateGame();
-
+            await _gameService.CreateGame("en");
             // Act
             var result = _gameService.GetGame(gameId);
 
@@ -59,12 +58,12 @@ namespace Game.Services.Tests.Services
         }
 
         [Fact]
-        public void MakeGuess_ShouldReturnUpdatedMakeGuessDto()
+        public async Task MakeGuess_ShouldReturnUpdatedMakeGuessDto()
         {
             // Arrange
             var gameId = Guid.NewGuid();
             _mockIdentifierGenerator.Setup(generator => generator.RetrieveIdentifier()).Returns(gameId);
-            _gameService.CreateGame();
+            await _gameService.CreateGame("en");
 
             // Act
             var result = _gameService.MakeGuess(gameId, "a");
@@ -75,12 +74,12 @@ namespace Game.Services.Tests.Services
         }
 
         [Fact]
-        public void DeleteGame_ShouldRemoveGame()
+        public async Task DeleteGame_ShouldRemoveGame()
         {
             // Arrange
             var gameId = Guid.NewGuid();
             _mockIdentifierGenerator.Setup(generator => generator.RetrieveIdentifier()).Returns(gameId);
-            _gameService.CreateGame();
+            await _gameService.CreateGame("en");
 
             // Act
             _gameService.DeleteGame(gameId);

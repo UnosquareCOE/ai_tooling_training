@@ -1,3 +1,4 @@
+using api.RequestModels;
 using AutoMapper;
 using Game.Services.Interfaces;
 using api.ViewModels;
@@ -19,9 +20,9 @@ namespace api.Controllers
         }
 
         [HttpPost]
-        public ActionResult<Guid> CreateGame()
+        public async Task<ActionResult<Guid>> CreateGame([FromBody] CreateGameRequestModel requestModel)
         {
-            var newGameId = _gameService.CreateGame();
+            var newGameId = await _gameService.CreateGame(requestModel.Language);
             var gameDto = _gameService.GetGame(newGameId);
             var response = _mapper.Map<CreateGameViewModel>(gameDto);
 
