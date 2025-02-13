@@ -1,31 +1,38 @@
 using AutoMapper;
+using Game.DAL.Interfaces;
 using Game.Services.Dto;
-using Game.Services.Interfaces;
 using Game.Services.Services;
-using Moq;
+using NSubstitute;
 using Xunit;
+using Game.Services.Interfaces;
+using Game.Services.Profiles;
 using Assert = Xunit.Assert;
 
 namespace Game.Services.Tests.Services
 {
     public class GameServiceTests
     {
-        private readonly Mock<IIdentifierGenerator> _mockIdentifierGenerator;
+        private readonly IIdentifierGenerator _mockIdentifierGenerator;
+        private readonly IGameContext _mockGameContext;
         private readonly IMapper _mapper;
         private readonly GameService _gameService;
 
         public GameServiceTests()
         {
-            _mockIdentifierGenerator = new Mock<IIdentifierGenerator>();
-
+            _mockIdentifierGenerator = Substitute.For<IIdentifierGenerator>();
+            _mockGameContext = Substitute.For<IGameContext>();
+            _mapper = GetMapper();
+            _gameService = new GameService(_mockIdentifierGenerator, _mapper, _mockGameContext);
+        }
+        
+        private static IMapper GetMapper()
+        {
             var config = new MapperConfiguration(cfg =>
             {
-                cfg.CreateMap<GameDto, GameDto>().ReverseMap();
-                cfg.CreateMap<MakeGuessDto, MakeGuessDto>().ReverseMap();
+                cfg.AddProfile<GameProfile>();
             });
-            _mapper = config.CreateMapper();
 
-            _gameService = new GameService(_mockIdentifierGenerator.Object, _mapper);
+            return new Mapper(config);
         }
 
         [Fact]
@@ -33,7 +40,8 @@ namespace Game.Services.Tests.Services
         {
             // Arrange
             var newGameId = Guid.NewGuid();
-            _mockIdentifierGenerator.Setup(generator => generator.RetrieveIdentifier()).Returns(newGameId);
+            _mockIdentifierGenerator.RetrieveIdentifier().Returns(newGameId);
+            _mockGameContext.SaveChangesAsync().Returns(Task.FromResult(1));
 
             // Act
             var result = await _gameService.CreateGameAsync("en");
@@ -47,8 +55,17 @@ namespace Game.Services.Tests.Services
         {
             // Arrange
             var gameId = Guid.NewGuid();
-            _mockIdentifierGenerator.Setup(generator => generator.RetrieveIdentifier()).Returns(gameId);
-            await _gameService.CreateGameAsync("en");
+            var game = new DAL.Models.Game
+            {
+                Id = gameId,
+                UnmaskedWord = "banana",
+                Word = "______",
+                RemainingGuesses = 5,
+                Status = "In Progress",
+                IncorrectGuesses = new List<string>()
+            };
+            _mockGameContext.Games.FindAsync(gameId).Returns(game);
+
             // Act
             var result = await _gameService.GetGameAsync(gameId);
 
@@ -62,11 +79,20 @@ namespace Game.Services.Tests.Services
         {
             // Arrange
             var gameId = Guid.NewGuid();
-            _mockIdentifierGenerator.Setup(generator => generator.RetrieveIdentifier()).Returns(gameId);
-            await _gameService.CreateGameAsync("en");
+            var game = new DAL.Models.Game
+            {
+                Id = gameId,
+                UnmaskedWord = "banana",
+                Word = "______",
+                RemainingGuesses = 5,
+                Status = "In Progress",
+                IncorrectGuesses = new List<string>()
+            };
+            _mockGameContext.Games.FindAsync(gameId).Returns(game);
+            _mockGameContext.SaveChangesAsync().Returns(Task.FromResult(1));
 
             // Act
-            var result = _gameService.MakeGuess(gameId, "a");
+            var result = await _gameService.MakeGuess(gameId, "a");
 
             // Assert
             Assert.NotNull(result);
@@ -78,15 +104,23 @@ namespace Game.Services.Tests.Services
         {
             // Arrange
             var gameId = Guid.NewGuid();
-            _mockIdentifierGenerator.Setup(generator => generator.RetrieveIdentifier()).Returns(gameId);
-            await _gameService.CreateGameAsync("en");
+            var game = new DAL.Models.Game
+            {
+                Id = gameId,
+                UnmaskedWord = "banana",
+                Word = "______",
+                RemainingGuesses = 5,
+                Status = "In Progress",
+                IncorrectGuesses = new List<string>()
+            };
+            _mockGameContext.Games.FindAsync(gameId).Returns(game);
+            _mockGameContext.SaveChangesAsync().Returns(Task.FromResult(1));
 
             // Act
-            _gameService.DeleteGame(gameId);
-            var result = await _gameService.GetGameAsync(gameId);
+            var result = await _gameService.DeleteGame(gameId);
 
             // Assert
-            Assert.Null(result);
+            Assert.True(result);
         }
     }
 }

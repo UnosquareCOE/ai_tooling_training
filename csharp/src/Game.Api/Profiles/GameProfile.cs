@@ -4,9 +4,9 @@ using Game.Services.Dto;
 
 namespace api.Profiles;
 
-public class MappingProfile : Profile
+public class GameProfile : Profile
 {
-    public MappingProfile()
+    public GameProfile()
     {
         ConfigureDtoToViewModel();
         ConfigureViewModelToDto();

@@ -7,6 +7,7 @@ using Game.Services.Utilities;
 using Polly;
 using Polly.Retry;
 using System.Collections.Concurrent;
+using Game.DAL.Interfaces;
 
 namespace Game.Services.Services
 {
@@ -15,16 +16,18 @@ namespace Game.Services.Services
         private static readonly ConcurrentDictionary<Guid, GameDto> Games = new();
         private readonly IIdentifierGenerator _identifierGenerator;
         private readonly IMapper _mapper;
+        private readonly IGameContext _gameContext;
 
         private static readonly AsyncRetryPolicy<HttpResponseMessage> RetryPolicy = Policy
             .HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
             .Or<HttpRequestException>()
             .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
-        public GameService(IIdentifierGenerator identifierGenerator, IMapper mapper)
+        public GameService(IIdentifierGenerator identifierGenerator, IMapper mapper, IGameContext gameContext)
         {
             _identifierGenerator = identifierGenerator;
             _mapper = mapper;
+            _gameContext = gameContext;
         }
 
         public async Task<Guid> CreateGameAsync(string language)
@@ -34,22 +37,25 @@ namespace Game.Services.Services
 
             var maskedWord = RegexHelper.GuessRegex().Replace(newGameWord, "_");
 
-            Games.TryAdd(newGameId, new GameDto
+            var newGame = new DAL.Models.Game
             {
-                GameId = newGameId,
+                Id = newGameId,
                 RemainingGuesses = 5,
                 UnmaskedWord = newGameWord,
                 Word = maskedWord,
                 Status = GameStatus.InProgress.ToString(),
-                IncorrectGuesses = new List<string>()
-            });
-
+                IncorrectGuesses = []
+            };
+            
+            _gameContext.Games.Add(newGame);
+            await _gameContext.SaveChangesAsync();
+            
             return newGameId;
         }
 
         public async Task<GameDto?> GetGameAsync(Guid gameId)
         {
-            var game = Games.GetValueOrDefault(gameId);
+            var game = await _gameContext.Games.FindAsync(gameId);
             if (game == null)
             {
                 return null;
@@ -58,12 +64,12 @@ namespace Game.Services.Services
             game.Word = new string(game.UnmaskedWord.Select(c => game.IncorrectGuesses.Contains(c.ToString()) ? c : '_')
                 .ToArray());
 
-            return await Task.FromResult(game);
+            return _mapper.Map<GameDto>(game);
         }
 
-        public MakeGuessDto MakeGuess(Guid gameId, string letter)
+        public async Task<MakeGuessDto?> MakeGuess(Guid gameId, string letter)
         {
-            var game = RetrieveGame(gameId);
+            var game = await _gameContext.Games.FindAsync(gameId);
             if (game == null)
             {
                 throw new KeyNotFoundException("Game not found");
@@ -94,23 +100,21 @@ namespace Game.Services.Services
                 game.Status = GameStatus.Lost.ToString();
             }
 
-            return new MakeGuessDto
+            game.Word = maskedWord;
+            await _gameContext.SaveChangesAsync();
+            return _mapper.Map<MakeGuessDto>(game);
+        }
+
+        public async Task<bool> DeleteGame(Guid gameId)
+        {
+            var game = await _gameContext.Games.FindAsync(gameId);
+            if (game == null)
             {
-                MaskedWord = maskedWord,
-                AttemptsRemaining = game.RemainingGuesses,
-                Guesses = game.IncorrectGuesses,
-                Status = game.Status
-            };
-        }
-
-        public bool DeleteGame(Guid gameId)
-        {
-            return Games.TryRemove(gameId, out _);
-        }
-
-        private static GameDto? RetrieveGame(Guid gameId)
-        {
-            return Games.GetValueOrDefault(gameId);
+                return false;
+            }
+            _gameContext.Games.Remove(game);
+            await _gameContext.SaveChangesAsync();
+            return true;
         }
 
         private async Task<string> RetrieveWordFromApi(string language)

@@ -6,7 +6,7 @@ namespace Game.Services.Interfaces
     {
         Task<Guid> CreateGameAsync(string language);
         Task<GameDto?> GetGameAsync(Guid gameId);
-        MakeGuessDto MakeGuess(Guid gameId, string letter);
-        bool DeleteGame(Guid gameId);
+        Task<MakeGuessDto?>  MakeGuess(Guid gameId, string letter);
+        Task<bool>  DeleteGame(Guid gameId);
     }
 }

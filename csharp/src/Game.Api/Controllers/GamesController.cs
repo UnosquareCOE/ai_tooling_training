@@ -55,7 +55,7 @@ namespace api.Controllers
         }
 
         [HttpPut("{gameId:guid}")]
-        public ActionResult<MakeGuessViewModel> MakeGuess([FromRoute] Guid gameId, [FromBody] GuessViewModel guessViewModel)
+        public async Task<ActionResult<MakeGuessViewModel>> MakeGuess([FromRoute] Guid gameId, [FromBody] GuessViewModel guessViewModel)
         {
             if (string.IsNullOrWhiteSpace(guessViewModel.Letter) || guessViewModel.Letter?.Length != 1)
             {
@@ -75,7 +75,7 @@ namespace api.Controllers
 
             try
             {
-                var makeGuessDto = _gameService.MakeGuess(gameId, guessViewModel.Letter.ToLower());
+                var makeGuessDto = await _gameService.MakeGuess(gameId, guessViewModel.Letter.ToLower());
                 var response = _mapper.Map<MakeGuessViewModel>(makeGuessDto);
                 return Ok(response);
             }
@@ -105,7 +105,7 @@ namespace api.Controllers
                 });
             }
 
-            var deleted = _gameService.DeleteGame(gameId);
+            var deleted = await _gameService.DeleteGame(gameId);
             return deleted ? NoContent() : NotFound();
         }
     }
