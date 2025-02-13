@@ -4,6 +4,8 @@ using Game.DAL.Enums;
 using Game.Services.Dto;
 using Game.Services.Interfaces;
 using Game.Services.Utilities;
+using Polly;
+using Polly.Retry;
 
 namespace Game.Services.Services
 {
@@ -12,7 +14,11 @@ namespace Game.Services.Services
         private static readonly Dictionary<Guid, GameDto> Games = new();
         private readonly IIdentifierGenerator _identifierGenerator;
         private readonly IMapper _mapper;
-
+        private static readonly AsyncRetryPolicy<HttpResponseMessage> RetryPolicy = Policy
+            .HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
+            .Or<HttpRequestException>()
+            .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+        
         public GameService(IIdentifierGenerator identifierGenerator, IMapper mapper)
         {
             _identifierGenerator = identifierGenerator;
@@ -60,17 +66,20 @@ namespace Game.Services.Services
                 throw new KeyNotFoundException("Game not found");
             }
 
-            if (!game.IncorrectGuesses.Contains(letter) && !game.UnmaskedWord.Contains(letter))
+            letter = letter.ToLower();
+            var unmaskedWordLower = game.UnmaskedWord.ToLower();
+
+            if (!game.IncorrectGuesses.Contains(letter) && !unmaskedWordLower.Contains(letter))
             {
                 game.IncorrectGuesses.Add(letter);
                 game.RemainingGuesses--;
             }
-            else if (!game.IncorrectGuesses.Contains(letter) && game.UnmaskedWord.Contains(letter))
+            else if (!game.IncorrectGuesses.Contains(letter) && unmaskedWordLower.Contains(letter))
             {
                 game.IncorrectGuesses.Add(letter);
             }
 
-            var maskedWord = new string(game.UnmaskedWord.Select(c => game.IncorrectGuesses.Contains(c.ToString()) ? c : '_').ToArray());
+            var maskedWord = new string(game.UnmaskedWord.Select(c => game.IncorrectGuesses.Contains(c.ToString().ToLower()) ? c : '_').ToArray());
 
             if (!maskedWord.Contains('_'))
             {
@@ -110,8 +119,15 @@ namespace Game.Services.Services
         private async Task<string> RetrieveWordFromApi(string language)
         {
             using var httpClient = new HttpClient();
-            var response = await httpClient.GetStringAsync($"https://random-word-api.herokuapp.com/word?lang={language}");
-            var words = JsonSerializer.Deserialize<List<string>>(response);
+            var response = await RetryPolicy.ExecuteAsync(() => httpClient.GetAsync($"https://random-word-api.herokuapp.com/word?lang={language}"));
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"Failed to retrieve word from API. Status code: {response.StatusCode}");
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var words = JsonSerializer.Deserialize<List<string>>(responseContent);
             return words?.FirstOrDefault() ?? "defaultword";
         }
     }
