@@ -8,7 +8,7 @@ namespace api.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public partial class GamesController : ControllerBase
+    public class GamesController : ControllerBase
     {
         private readonly IGameService _gameService;
         private readonly IMapper _mapper;
@@ -20,46 +20,14 @@ namespace api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<CreateGameViewModel>> CreateGame([FromBody] CreateGameRequestModel requestModel)
+        public async Task<ActionResult<Guid>> CreateGame([FromBody] CreateGameRequestModel? request)
         {
-            try
-            {
-                var newGameId = await _gameService.CreateGameAsync(requestModel.Language);
-                var gameDto = await _gameService.GetGameAsync(newGameId);
-                var response = _mapper.Map<CreateGameViewModel>(gameDto);
+            request ??= new CreateGameRequestModel(language: "en");
+            
+            var newGameId = await _gameService.CreateGameAsync(request.Language);
+            var gameDto = await _gameService.GetGameAsync(newGameId);
 
-                return Ok(response);
-            }
-            catch (HttpRequestException ex)
-            {
-                return StatusCode(StatusCodes.Status503ServiceUnavailable, new ResponseErrorViewModel
-                {
-                    Message = "Failed to retrieve word from external API",
-                    Errors = new List<ResponseErrorDetailViewModel>
-                    {
-                        new ResponseErrorDetailViewModel
-                        {
-                            Field = "externalApi",
-                            Message = ex.Message
-                        }
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseErrorViewModel
-                {
-                    Message = "An unexpected error occurred",
-                    Errors = new List<ResponseErrorDetailViewModel>
-                    {
-                        new ResponseErrorDetailViewModel
-                        {
-                            Field = "server",
-                            Message = ex.Message
-                        }
-                    }
-                });
-            }
+            return Ok(_mapper.Map<CreateGameViewModel>(gameDto));
         }
 
         [HttpGet("{gameId:guid}")]
