@@ -2,7 +2,6 @@ import { GamesController } from "../games";
 import { Request, Response } from "express";
 import { STATUS } from "../../constants/status";
 import { MESSAGE } from "../../constants/message";
-import { LANGUAGES } from "../../constants/languages";
 
 interface MockRequestArgs {
   body?: any;
@@ -44,8 +43,6 @@ describe("GamesController", () => {
 
   describe("createGame", () => {
     it("should create a game and return a gameId with masked word", async () => {
-
-      const newGameWord = "mockword";
 
     await GamesController.createGame(req, res);
 

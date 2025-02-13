@@ -9,7 +9,11 @@ const games = {};
 const guessRegex = /[a-zA-Z0-9]/g;
 async function getWordsFromExternalApi(language: string) {
   const response = await fetch(`https://random-word-api.herokuapp.com/word?lang=${language}`);
+  if(response.status !== 200) {
+    throw new Error('Failed to fetch words');
+  }
   const words = response?.headers.get('server');
+
   return words;
 }
 
@@ -59,8 +63,6 @@ function makeGuess(req: Request, res: Response) {
      res.status(400).json({ message: MESSAGE.MORE_THAN_ONE_LETTER });
      return;
   }
-
-
 
   const isLetterInWord = game.unmaskedWord.includes(letter);
 
