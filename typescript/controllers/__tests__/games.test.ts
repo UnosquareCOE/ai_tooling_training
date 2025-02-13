@@ -1,7 +1,7 @@
 import { GamesController } from "../games";
 import { Request, Response } from "express";
 import { STATUS } from "../../constants/status";
-import { MESSAGE } from "../../constants/message";
+import { MESSAGES } from "../../constants/messages";
 
 interface MockRequestArgs {
   body?: any;
@@ -50,6 +50,7 @@ describe("GamesController", () => {
       expect(res.send).toHaveBeenCalledWith({
         gameId: mockId,
         maskedWord:"______",
+        incorrectGuesses: [],
       });
     });
   });
@@ -86,7 +87,7 @@ describe("GamesController", () => {
       await GamesController.getGame(req, res);
 
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith( MESSAGE.GAME_NOT_FOUND );
+      expect(res.json).toHaveBeenCalledWith( MESSAGES.GAME_NOT_FOUND );
     });
   });
 
@@ -138,7 +139,7 @@ describe("GamesController", () => {
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
-        message: MESSAGE.MORE_THAN_ONE_LETTER,
+        message: MESSAGES.MORE_THAN_ONE_LETTER,
       });
     });
 
@@ -148,7 +149,7 @@ describe("GamesController", () => {
       await GamesController.makeGuess(req, res);
 
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ message: MESSAGE.GAME_NOT_FOUND });
+      expect(res.json).toHaveBeenCalledWith({ message: MESSAGES.GAME_NOT_FOUND });
     });
   });
 

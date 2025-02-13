@@ -2,7 +2,7 @@ import { Response, Request } from "express";
 import { v4 as uuid } from "uuid";
 import { STATUS } from "../constants/status";
 import { LANGUAGES } from "../constants/languages";
-import { MESSAGE } from "../constants/message";
+import { MESSAGES } from "../constants/messages";
 import { clearUnmaskedWord } from "../utils/clear-unmasked-word";
 
 const games = {};
@@ -13,6 +13,10 @@ async function getWordsFromExternalApi(language: string) {
     throw new Error('Failed to fetch words');
   }
   const words = response?.headers.get('server');
+
+  if (typeof words === 'undefined') {
+    throw new Error('Failed to fetch words - server header was undefined');
+  }
 
   return words;
 }
@@ -31,7 +35,7 @@ async function createGame (req: Request, res: Response)  {
   res.status(200).send({
     gameId: newGameId,
     maskedWord: games[newGameId].word,
-    incorrectGuesses: games[newGameId].remainingGuesses,
+    incorrectGuesses: games[newGameId].incorrectGuesses,
   });
 }
 
@@ -39,7 +43,7 @@ function getGame(req: Request, res: Response) {
   const gameId = req.params.gameId;
   const game = retrieveGame(gameId);
 if(!game) {
-  res.status(404).json(MESSAGE.GAME_NOT_FOUND)
+  res.status(404).json(MESSAGES.GAME_NOT_FOUND)
   return;
 }
   if (game?.status === STATUS.NO_STATUS_LEFT) {
@@ -54,13 +58,18 @@ function makeGuess(req: Request, res: Response) {
   const gameId = req.params.gameId;
   const { letter } = req.body;
   const game = retrieveGame(gameId);
+  if (!letter.match(guessRegex)) {
+    res.status(400).json({ message: MESSAGES.INVALID_INPUT });
+    return;
+  }
+
   if (!game) {
-     res.status(404).json({ message: MESSAGE.GAME_NOT_FOUND });
+     res.status(404).json({ message: MESSAGES.GAME_NOT_FOUND });
      return;
   }
 
   if (!letter || letter.length !== 1) {
-     res.status(400).json({ message: MESSAGE.MORE_THAN_ONE_LETTER });
+     res.status(400).json({ message: MESSAGES.MORE_THAN_ONE_LETTER });
      return;
   }
 
@@ -103,7 +112,7 @@ function deleteGame(req: Request, res: Response) {
 
   delete games[gameId]; 
 
-  res.status(204);
+  res.status(204).send();
 }
 
 
