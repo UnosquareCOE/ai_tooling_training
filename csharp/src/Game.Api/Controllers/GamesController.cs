@@ -24,8 +24,8 @@ namespace api.Controllers
         {
             try
             {
-                var newGameId = await _gameService.CreateGame(requestModel.Language);
-                var gameDto = _gameService.GetGame(newGameId);
+                var newGameId = await _gameService.CreateGameAsync(requestModel.Language);
+                var gameDto = await _gameService.GetGameAsync(newGameId);
                 var response = _mapper.Map<CreateGameViewModel>(gameDto);
 
                 return Ok(response);
@@ -63,9 +63,9 @@ namespace api.Controllers
         }
 
         [HttpGet("{gameId:guid}")]
-        public ActionResult<CheckGameStatusViewModel> GetGame([FromRoute] Guid gameId)
+        public async Task<ActionResult<CheckGameStatusViewModel>> GetGame([FromRoute] Guid gameId)
         {
-            var gameDto = _gameService.GetGame(gameId);
+            var gameDto = await _gameService.GetGameAsync(gameId);
             if (gameDto == null)
             {
                 return NotFound(new ResponseErrorViewModel
@@ -118,9 +118,9 @@ namespace api.Controllers
         }
 
         [HttpDelete("{gameId:guid}")]
-        public IActionResult DeleteGame([FromRoute] Guid gameId)
+        public async Task<IActionResult> DeleteGame([FromRoute] Guid gameId)
         {
-            var game = _gameService.GetGame(gameId);
+            var game = await _gameService.GetGameAsync(gameId);
             if (game == null)
             {
                 return NotFound(new ResponseErrorViewModel

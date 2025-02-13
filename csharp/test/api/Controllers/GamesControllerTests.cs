@@ -50,8 +50,8 @@ public class GamesControllerTests
             IncorrectGuesses = new List<string>()
         };
 
-        _mockGameService.Setup(service => service.CreateGame(It.IsAny<string>())).ReturnsAsync(newGameId);
-        _mockGameService.Setup(service => service.GetGame(newGameId)).Returns(gameDto);
+        _mockGameService.Setup(service => service.CreateGameAsync(It.IsAny<string>())).ReturnsAsync(newGameId);
+        _mockGameService.Setup(service => service.GetGameAsync(newGameId)).ReturnsAsync(gameDto);
 
         var requestModel = new CreateGameRequestModel { Language = "en" };
         var response = await _gamesController.CreateGame(requestModel);
@@ -63,7 +63,7 @@ public class GamesControllerTests
     }
 
     [Fact]
-    public void GetGame_WhenCalled_ReturnsOkObjectResult()
+    public async Task GetGame_WhenCalled_ReturnsOkObjectResult()
     {
         var gameId = Guid.NewGuid();
         var gameDto = new GameDto
@@ -76,9 +76,9 @@ public class GamesControllerTests
             IncorrectGuesses = new List<string>()
         };
 
-        _mockGameService.Setup(service => service.GetGame(gameId)).Returns(gameDto);
+        _mockGameService.Setup(service => service.GetGameAsync(gameId)).ReturnsAsync(gameDto);
 
-        var response = _gamesController.GetGame(gameId);
+        var response = await _gamesController.GetGame(gameId);
 
         var result = Assert.IsType<OkObjectResult>(response.Result);
         var model = Assert.IsType<CheckGameStatusViewModel>(result.Value);
@@ -125,25 +125,25 @@ public class GamesControllerTests
     }
 
     [Fact]
-    public void DeleteGame_WhenCalled_ReturnsNoContent()
+    public async Task DeleteGame_WhenCalled_ReturnsNoContent()
     {
         var gameId = Guid.NewGuid();
 
         _mockGameService.Setup(service => service.DeleteGame(gameId));
 
-        var response = _gamesController.DeleteGame(gameId);
+        var response = await _gamesController.DeleteGame(gameId);
 
         Assert.IsType<NotFoundObjectResult>(response);
     }
 
     [Fact]
-    public void DeleteGame_WhenCalledWithInvalidId_ReturnsNotFound()
+    public async Task DeleteGame_WhenCalledWithInvalidId_ReturnsNotFound()
     {
         var gameId = Guid.NewGuid();
 
         _mockGameService.Setup(service => service.DeleteGame(gameId)).Throws(new KeyNotFoundException());
 
-        var response = _gamesController.DeleteGame(gameId);
+        var response = await _gamesController.DeleteGame(gameId);
 
         Assert.IsType<NotFoundObjectResult>(response);
     }

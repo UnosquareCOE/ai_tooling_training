@@ -36,7 +36,7 @@ namespace Game.Services.Tests.Services
             _mockIdentifierGenerator.Setup(generator => generator.RetrieveIdentifier()).Returns(newGameId);
 
             // Act
-            var result = await _gameService.CreateGame("en");
+            var result = await _gameService.CreateGameAsync("en");
 
             // Assert
             Assert.Equal(newGameId, result);
@@ -48,9 +48,9 @@ namespace Game.Services.Tests.Services
             // Arrange
             var gameId = Guid.NewGuid();
             _mockIdentifierGenerator.Setup(generator => generator.RetrieveIdentifier()).Returns(gameId);
-            await _gameService.CreateGame("en");
+            await _gameService.CreateGameAsync("en");
             // Act
-            var result = _gameService.GetGame(gameId);
+            var result = await _gameService.GetGameAsync(gameId);
 
             // Assert
             Assert.NotNull(result);
@@ -63,7 +63,7 @@ namespace Game.Services.Tests.Services
             // Arrange
             var gameId = Guid.NewGuid();
             _mockIdentifierGenerator.Setup(generator => generator.RetrieveIdentifier()).Returns(gameId);
-            await _gameService.CreateGame("en");
+            await _gameService.CreateGameAsync("en");
 
             // Act
             var result = _gameService.MakeGuess(gameId, "a");
@@ -79,11 +79,11 @@ namespace Game.Services.Tests.Services
             // Arrange
             var gameId = Guid.NewGuid();
             _mockIdentifierGenerator.Setup(generator => generator.RetrieveIdentifier()).Returns(gameId);
-            await _gameService.CreateGame("en");
+            await _gameService.CreateGameAsync("en");
 
             // Act
             _gameService.DeleteGame(gameId);
-            var result = _gameService.GetGame(gameId);
+            var result = await _gameService.GetGameAsync(gameId);
 
             // Assert
             Assert.Null(result);

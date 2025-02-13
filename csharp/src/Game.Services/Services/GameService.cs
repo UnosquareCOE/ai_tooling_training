@@ -6,33 +6,35 @@ using Game.Services.Interfaces;
 using Game.Services.Utilities;
 using Polly;
 using Polly.Retry;
+using System.Collections.Concurrent;
 
 namespace Game.Services.Services
 {
     public class GameService : IGameService
     {
-        private static readonly Dictionary<Guid, GameDto> Games = new();
+        private static readonly ConcurrentDictionary<Guid, GameDto> Games = new();
         private readonly IIdentifierGenerator _identifierGenerator;
         private readonly IMapper _mapper;
+
         private static readonly AsyncRetryPolicy<HttpResponseMessage> RetryPolicy = Policy
             .HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
             .Or<HttpRequestException>()
             .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
-        
+
         public GameService(IIdentifierGenerator identifierGenerator, IMapper mapper)
         {
             _identifierGenerator = identifierGenerator;
             _mapper = mapper;
         }
 
-        public async Task<Guid> CreateGame(string language)
+        public async Task<Guid> CreateGameAsync(string language)
         {
             var newGameWord = await RetrieveWordFromApi(language);
             var newGameId = _identifierGenerator.RetrieveIdentifier();
 
             var maskedWord = RegexHelper.GuessRegex().Replace(newGameWord, "_");
 
-            Games.Add(newGameId, new GameDto
+            Games.TryAdd(newGameId, new GameDto
             {
                 GameId = newGameId,
                 RemainingGuesses = 5,
@@ -45,7 +47,7 @@ namespace Game.Services.Services
             return newGameId;
         }
 
-        public GameDto? GetGame(Guid gameId)
+        public async Task<GameDto?> GetGameAsync(Guid gameId)
         {
             var game = Games.GetValueOrDefault(gameId);
             if (game == null)
@@ -53,9 +55,10 @@ namespace Game.Services.Services
                 return null;
             }
 
-            game.Word = new string(game.UnmaskedWord.Select(c => game.IncorrectGuesses.Contains(c.ToString()) ? c : '_').ToArray());
+            game.Word = new string(game.UnmaskedWord.Select(c => game.IncorrectGuesses.Contains(c.ToString()) ? c : '_')
+                .ToArray());
 
-            return game;
+            return await Task.FromResult(game);
         }
 
         public MakeGuessDto MakeGuess(Guid gameId, string letter)
@@ -79,7 +82,8 @@ namespace Game.Services.Services
                 game.IncorrectGuesses.Add(letter);
             }
 
-            var maskedWord = new string(game.UnmaskedWord.Select(c => game.IncorrectGuesses.Contains(c.ToString().ToLower()) ? c : '_').ToArray());
+            var maskedWord = new string(game.UnmaskedWord
+                .Select(c => game.IncorrectGuesses.Contains(c.ToString().ToLower()) ? c : '_').ToArray());
 
             if (!maskedWord.Contains('_'))
             {
@@ -101,25 +105,19 @@ namespace Game.Services.Services
 
         public bool DeleteGame(Guid gameId)
         {
-            var game = GetGame(gameId);
-            if (game == null)
-            {
-                return false;
-            }
-
-            Games.Remove(gameId);
-            return true;
-            
+            return Games.TryRemove(gameId, out _);
         }
+
         private static GameDto? RetrieveGame(Guid gameId)
         {
             return Games.GetValueOrDefault(gameId);
         }
-        
+
         private async Task<string> RetrieveWordFromApi(string language)
         {
             using var httpClient = new HttpClient();
-            var response = await RetryPolicy.ExecuteAsync(() => httpClient.GetAsync($"https://random-word-api.herokuapp.com/word?lang={language}"));
+            var response = await RetryPolicy.ExecuteAsync(() =>
+                httpClient.GetAsync($"https://random-word-api.herokuapp.com/word?lang={language}"));
 
             if (!response.IsSuccessStatusCode)
             {
@@ -128,7 +126,8 @@ namespace Game.Services.Services
 
             var responseContent = await response.Content.ReadAsStringAsync();
             var words = JsonSerializer.Deserialize<List<string>>(responseContent);
-            return words?.FirstOrDefault() ?? "defaultword";
+            return words?.FirstOrDefault() ??
+                   throw new HttpRequestException("API returned an empty or invalid response");
         }
     }
 }
