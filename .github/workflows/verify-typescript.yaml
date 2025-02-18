@@ -10,7 +10,7 @@ defaults:
     working-directory: ./typescript
 
 jobs:
-  verify:
+  verify-ts:
     runs-on: ubuntu-latest
     steps:
       - name: 🛎 Checkout
