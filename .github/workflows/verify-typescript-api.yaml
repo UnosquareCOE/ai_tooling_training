@@ -19,4 +19,4 @@ jobs:
       - name: "Install newman"
         run: "npm install -g newman"
       - name: "Run tests"
-        run: "newman run ./tests/postman.api.json"  
+        run: "newman run ./tests/postman.api.json"

@@ -24,7 +24,7 @@
 					"script": {
 						"exec": [
 							"pm.test(\"Create Game\", function () {",
-							"    pm.response.to.have.status(200);",
+							"    pm.response.to.have.status(201);",
 							"",
 							"    const gameId = pm.response.json().gameId;",
 							"    pm.collectionVariables.set(\"gameID\", gameId);",
@@ -66,9 +66,9 @@
 							"    const response = pm.response.json();",
 							"",
 							"    pm.expect(response.status).to.eql('In Progress')",
-							"    pm.expect(response.incorrectGuesses.length).to.equal(0);",
-							"    pm.expect(response.remainingGuesses).to.equal(5);",
-							"    pm.expect(response.word).to.match(/^([_]+)$/);",
+							"    pm.expect(response.guesses.length).to.equal(0);",
+							"    pm.expect(response.attemptsRemaining).to.equal(5);",
+							"    pm.expect(response.maskedWord).to.match(/^([_]+)$/);",
 							"});"
 						],
 						"type": "text/javascript",
