@@ -1,6 +1,6 @@
 import {ERRORS} from "../constants";
 
-export const retrieveWord = (words: string | any[]) => words[Math.ceil(words.length - 1)];
+export const retrieveWord = (words: string | any[]) => words[Math.floor(Math.random() * words.length)];
 
 export const clearUnmaskedWord = (game: any) => {
     const withoutUnmasked = {

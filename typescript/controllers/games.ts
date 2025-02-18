@@ -67,7 +67,7 @@ function makeGuess(req: Request, res: Response) {
         return;
     }
 
-    if (game.incorrectGuesses.includes(letter) || game.word.includes(letter)) {
+    if (game.incorrectGuesses.includes(letter.toLowerCase()) || game.word.includes(letter.toLowerCase())) {
         res.status(STATUS_CODES.BAD_REQUEST).json({
             message: "Cannot process guess",
             errors: [{
