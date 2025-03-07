@@ -19,6 +19,6 @@ public class GameControllerTests {
         var result = gameController.createGame();
 
         // assert
-        assertEquals(newId, "sdfsdf", "New game identifier is not valid.");
+        assertEquals(newId, result, "New game identifier is not valid.");
     }
 }
