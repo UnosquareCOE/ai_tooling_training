@@ -1,4 +1,4 @@
-name: Verify CSharp Unit Tests
+name: Verify Java Unit Tests
 
 on:
   workflow_dispatch:

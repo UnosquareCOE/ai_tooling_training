@@ -1,4 +1,4 @@
-name: Verify CSharp API Tests
+name: Verify Java API Tests
 
 on:
   workflow_dispatch:
