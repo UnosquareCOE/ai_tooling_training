@@ -58,6 +58,6 @@ public class GamesController {
 
     private static String retrieveWord() {
         var rand = new Random();
-        return words.get(rand.nextInt(words.size() - 1));
+        return words.get(rand.nextInt(words.size() - 3));
     }
 }
