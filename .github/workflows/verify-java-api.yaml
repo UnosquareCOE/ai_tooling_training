@@ -1,0 +1,27 @@
+name: Verify CSharp API Tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "java/**"
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛎 Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with: 
+          node-version: "22"
+      - name: 🍗 Restore nuget & Run Application
+        run: cd java && gradle dependencies && (gradle run&) && sleep 5
+      - name: "Install newman"
+        run: "npm install -g newman"
+      - name: "Run tests"
+        run: "newman run ./tests/postman.api.json"  
