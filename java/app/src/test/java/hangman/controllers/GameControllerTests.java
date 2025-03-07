@@ -1,11 +1,10 @@
 package hangman.controllers;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import hangman.mocks.MockIdentifierGenerator;
-import org.junit.Test;
-
+import org.junit.jupiter.api.Test;
 import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
 
 public class GameControllerTests {
 
@@ -14,12 +13,12 @@ public class GameControllerTests {
         // arrange
         var newId = UUID.randomUUID();
         var mockIdentifierGenerator = new MockIdentifierGenerator(newId);
-        var gameController = new GameController(mockIdentifierGenerator);
+        var gameController = new GamesController(mockIdentifierGenerator);
 
         // act
         var result = gameController.createGame();
 
         // assert
-        assertEquals("New game identifier is not valid.", newId, result);
+        assertEquals(newId, "sdfsdf", "New game identifier is not valid.");
     }
 }

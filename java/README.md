@@ -49,7 +49,7 @@ To run the Java service using the Gradle wrapper, follow these steps:
 
 - The app should be available at: `http://localhost:4567`
 
-3. (optional) Run the following command to execute the unit tests: `gradle test`
+3. (optional) Run the following command to execute the unit tests: `gradle test -i`
 
 NOTE: if using the gradle wrapper (which doesn't require installing gradle, replace the above gradle commands with ./gradlew)
 
@@ -102,7 +102,7 @@ This method should handle if a Game does not exist; it should return a NotFound 
 1. Build out logic for makeGuess implementation.
 
 ```
-  MakeGuess needs to handle Checking a letter against a specific game determined by gameId. Update MakeGuess to review the letter against the game UnmaskedWord, update the game word property to unmask any correctly guessed letters and modify the RemainingGuesses account if an incorrect guess is made. If the RemainingGuesses count reaches, the Status of the game should move to "Lost" and no more guesses can be made
+MakeGuess needs to handle Checking a letter against a specific game determined by gameId. Update MakeGuess to review the letter against the game UnmaskedWord, update the game word property to unmask any correctly guessed letters and modify the RemainingGuesses account if an incorrect guess is made. If the RemainingGuesses count reaches, the Status of the game should move to "Lost" and no more guesses can be made
 ```
 
 ### Adding Validation - Chat Prompt - (cmd + control/control + alt & i) - GamesController reference
@@ -110,7 +110,7 @@ This method should handle if a Game does not exist; it should return a NotFound 
 1. Implementation and usage
 
 ```
-  Validation is currently handled inline within the GamesController, specifically the makeGuess method. Design an approach to implement separated Validation including both the logic and the failure messages, this approach should be able to accommodate many validations happening within a validator and return all failure messages. This approach should have a validator within the Guess.java file, there should be a IValidatable inferface to return Validators, the Guess class should inherit from IValidatable, which will return the GuessValidator and lastly the GamesController.java should be updated to use the GuessValidator returned by the Guess.java model
+Validation is currently handled inline within the GamesController, specifically the makeGuess method. Design an approach to implement separated Validation including both the logic and the failure messages, this approach should be able to accommodate many validations happening within a validator and return all failure messages. This approach should have a validator within the Guess.java file, there should be a IValidatable inferface to return Validators, the Guess class should inherit from IValidatable, which will return the GuessValidator and lastly the GamesController.java should be updated to use the GuessValidator returned by the Guess.java model
 ```
 
 ### Adding Layered Architectural Pattern - Chat Prompt - (cmd + control/control + alt & i) - GamesController reference
@@ -118,6 +118,5 @@ This method should handle if a Game does not exist; it should return a NotFound 
 1. Generates an example structure for a layered architecture.
 
 ```
-  Implement a layered architecture with a presentation layer, business layer and data access layer.
-  Presentation handling the HttpRequests within Controllers for example GamesController, business for any logic for example GamesService and data access for managing the state of the game for example   GamesRepository.
+Implement a layered architecture with a presentation layer, business layer and data access layer. Presentation handling the HttpRequests within Controllers for example GamesController, business for any logic for example GamesService and data access for managing the state of the game for example GamesRepository.
 ```
