@@ -1,67 +1,106 @@
-using System.Text.RegularExpressions;
 using api.ViewModels;
-using api.Utils;
 using Microsoft.AspNetCore.Mvc;
+using YourNamespace.ViewModels;
+using service.interfaces;
+using AutoMapper;
+using api.Validation;
 
 namespace api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public partial class GamesController(IIdentifierGenerator identifierGenerator) : ControllerBase
+public partial class GamesController(IHangmanGameService gameService, IMapper mapper) : ControllerBase
 {
-    private static readonly Dictionary<Guid, GameViewModel> Games = new();
-    private readonly string[] _words = ["banana", "canine", "unosquare", "airport"];
-
-    [GeneratedRegex(@"[a-zA-Z0-9_]")]
-    private static partial Regex GuessRegex();
 
     [HttpPost]
-    public ActionResult<Guid> CreateGame()
+    public ActionResult<CreateGameViewModel> CreateGame()
     {
-        var newGameWord = RetrieveWord();
-        var newGameId = identifierGenerator.RetrieveIdentifier();
-
-        Games.Add(newGameId, new GameViewModel
-        {
-            RemainingGuesses = 3,
-            UnmaskedWord = newGameWord,
-            Word = GuessRegex().Replace(newGameWord, "_"),
-            Status = "In Progress",
-            IncorrectGuesses = []
-        });
-
-        return Ok(newGameId);
+        var dto = gameService.CreateGame();
+        var result = mapper.Map<CreateGameViewModel>(dto);
+        return Ok(result);
     }
 
     [HttpGet("{gameId:guid}")]
-    public ActionResult<GameViewModel> GetGame([FromRoute] Guid gameId)
+    public ActionResult<CheckGameViewModel> GetGame([FromRoute] Guid gameId)
     {
-        var game = RetrieveGame(gameId);
-        return Ok(game);
+        var guidErrorResponse = ValidationUtils.ValidateGuid(gameId);
+        if (guidErrorResponse != null)
+        {
+            return BadRequest(guidErrorResponse);
+        }
+
+        var dto = gameService.GetGameById(gameId);
+
+        if (dto == null)
+        {
+            return NotFound(new ResponseErrorViewModel
+            {
+                Message = "Game not found",
+                Errors = new List<ErrorDetail>
+                {
+                    new ErrorDetail
+                    {
+                        Field = "gameId",
+                        Message = "Game not found"
+                    }
+                }
+            });
+        }
+
+        var result = mapper.Map<CheckGameViewModel>(dto);
+        return Ok(result);
     }
 
     [HttpPut("{gameId:guid}")]
-    public ActionResult<GameViewModel> MakeGuess([FromRoute] Guid gameId, [FromBody] GuessViewModel guessViewModel)
+    public ActionResult<ProcessGameViewModel> MakeGuess([FromRoute] Guid gameId, [FromBody] GuessViewModel guessViewModel)
     {
-        if (string.IsNullOrWhiteSpace(guessViewModel.Letter) || guessViewModel.Letter?.Length != 1)
+        var validationResult = guessViewModel.Validate();
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(ValidationUtils.CreateBadRequestResponse(validationResult));
+        }
+
+        var guidErrorResponse = ValidationUtils.ValidateGuid(gameId);
+        if (guidErrorResponse != null)
+        {
+            return BadRequest(guidErrorResponse);
+        }
+
+        try
+        {
+            var dto = gameService.MakeGuess(gameId, guessViewModel.Letter!.Value);
+            if (dto == null)
+            {
+                return NotFound();
+            }
+
+            var result = mapper.Map<CheckGameViewModel>(dto);
+            return Ok(result);
+        }
+        catch (Exception e)
         {
             return BadRequest(new ResponseErrorViewModel
             {
-                Message = "Letter cannot accept more than 1 character"
+                Message = e.Message
             });
         }
-        
-        var game = RetrieveGame(gameId);
-        return Ok(game);
     }
 
-    private static GameViewModel? RetrieveGame(Guid gameId)
+    [HttpDelete("{gameId}")]
+    public IActionResult ClearGame(Guid gameId)
     {
-        return Games.GetValueOrDefault(gameId);
-    }
+        var guidErrorResponse = ValidationUtils.ValidateGuid(gameId);
+        if (guidErrorResponse != null)
+        {
+            return BadRequest(guidErrorResponse);
+        }
 
-    private string RetrieveWord()
-    {
-        return _words[new Random().Next(3, _words.Length - 1)];
+        var removedGameId = gameService.ClearGame(gameId);
+        if (removedGameId == null)
+        {
+            return NotFound();
+        }
+        return NoContent();
     }
 }
+
