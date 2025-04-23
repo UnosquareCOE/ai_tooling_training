@@ -1,8 +1,9 @@
 using System.Text.Json.Serialization;
+using services.Constants;
 
-namespace api.ViewModels;
+namespace services.Dtos;
 
-public class GameViewModel
+public class GameDto
 {
     public int RemainingGuesses { get; set; }
     public string? Word { get; set; }
