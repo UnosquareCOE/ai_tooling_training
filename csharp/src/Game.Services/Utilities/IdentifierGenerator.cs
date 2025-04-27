@@ -1,10 +1,6 @@
-namespace api.Utils;
+using Game.Services.Interfaces;
 
-public interface IIdentifierGenerator
-{
-    Guid RetrieveIdentifier();
-}
-
+namespace Game.Services.Utilities;
 public class IdentifierGenerator : IIdentifierGenerator
 {
     public Guid RetrieveIdentifier()
