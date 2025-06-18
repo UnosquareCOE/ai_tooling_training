@@ -32,11 +32,22 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
 
         return Ok(newGameId);
     }
+    
+    
 
     [HttpGet("{gameId:guid}")]
     public ActionResult<GameViewModel> GetGame([FromRoute] Guid gameId)
     {
         var game = RetrieveGame(gameId);
+        
+        if (game == null)
+        {
+            return NotFound(new ResponseErrorViewModel
+            {
+                Message = "Game not found"
+            });
+        }
+        
         return Ok(game);
     }
 
@@ -52,7 +63,44 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
         }
         
         var game = RetrieveGame(gameId);
+        
+        if (game == null)
+        {
+            return NotFound(new ResponseErrorViewModel
+            {
+                Message = "Game not found"
+            });
+        }
+        
         return Ok(game);
+    }
+
+    [HttpDelete("{gameId:guid}")]
+    public ActionResult DeleteGame([FromRoute] Guid gameId)
+    {
+        var game = RetrieveGame(gameId);
+        
+        if (game == null)
+        {
+            return NotFound(new ResponseErrorViewModel
+            {
+                Message = "Game not found"
+            });
+        }
+
+        // Check if game can be deleted (only "In Progress" games)
+        if (game.Status == "Won" || game.Status == "Lost")
+        {
+            return BadRequest(new ResponseErrorViewModel
+            {
+                Message = "Cannot delete completed games. Only games with 'In Progress' status can be deleted."
+            });
+        }
+
+        // Remove the game from the dictionary
+        Games.Remove(gameId);
+        
+        return NoContent(); // 204 No Content is standard for successful DELETE operations
     }
 
     private static GameViewModel? RetrieveGame(Guid gameId)
