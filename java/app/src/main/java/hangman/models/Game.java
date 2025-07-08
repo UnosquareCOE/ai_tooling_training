@@ -24,4 +24,37 @@ public class Game {
         status = "In Progress";
         incorrectGuesses = new ArrayList<>();
     }
+
+    // Getters and Setters
+    public int getRemainingGuesses() {
+        return remainingGuesses;
+    }
+
+    public void setRemainingGuesses(int remainingGuesses) {
+        this.remainingGuesses = remainingGuesses;
+    }
+
+    public String getWord() {
+        return word;
+    }
+
+    public void setWord(String word) {
+        this.word = word;
+    }
+
+    public String getUnmaskedWord() {
+        return unmaskedWord;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public List<String> getIncorrectGuesses() {
+        return incorrectGuesses;
+    }
 }
