@@ -55,6 +55,36 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
         return Ok(game);
     }
 
+    /// <summary>
+    /// Deletes a game that is currently in progress
+    /// </summary>
+    /// <param name="gameId">The unique identifier of the game to delete</param>
+    /// <returns>No content if successful, appropriate error response otherwise</returns>
+    [HttpDelete("{gameId:guid}")]
+    public ActionResult DeleteGame([FromRoute] Guid gameId)
+    {
+        var game = RetrieveGame(gameId);
+        
+        if (game == null)
+        {
+            return NotFound(new ResponseErrorViewModel
+            {
+                Message = "Game not found"
+            });
+        }
+
+        if (game.Status != "In Progress")
+        {
+            return Conflict(new ResponseErrorViewModel
+            {
+                Message = "Cannot delete completed game"
+            });
+        }
+
+        Games.Remove(gameId);
+        return NoContent();
+    }
+
     private static GameViewModel? RetrieveGame(Guid gameId)
     {
         return Games.GetValueOrDefault(gameId);

@@ -53,6 +53,31 @@ To run the Java service using the Gradle wrapper, follow these steps:
 
 NOTE: if using the gradle wrapper (which doesn't require installing gradle, replace the above gradle commands with ./gradlew)
 
+## Available Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST   | `/games` | Create a new game |
+| GET    | `/games/{game_id}` | Get game details |
+| PUT    | `/games/{game_id}` | Make a guess |
+| DELETE | `/games/{game_id}` | Delete an in-progress game |
+
+### Game Deletion Rules
+- Only games with status "In Progress" can be deleted
+- Completed games (Won/Lost) cannot be deleted
+- Returns 204 No Content on successful deletion
+- Returns 404 if game not found
+- Returns 409 if attempting to delete completed game
+
+**Example Usage:**
+```bash
+# Create a game
+curl -X POST http://localhost:4567/games
+
+# Delete the game (replace with actual game ID)
+curl -X DELETE http://localhost:4567/games/a83c2b3f-3c16-4ab2-9ea0-a4d6a2e51620
+```
+
 ## Prompt Examples
 
 Below are some prompts that can be tried from the `GamesController`. These prompts are purely for examples and do not product the final result of what is expected from the challenge.

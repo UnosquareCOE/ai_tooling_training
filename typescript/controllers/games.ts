@@ -43,6 +43,38 @@ function makeGuess(req: Request, res: Response) {
   res.status(200).json(clearUnmaskedWord(game));
 }
 
+/**
+ * Deletes a game that is currently in progress
+ * @param req Express request object containing gameId parameter
+ * @param res Express response object
+ */
+function deleteGame(req: Request, res: Response) {
+  const { gameId } = req.params;
+
+  if (!gameId) {
+    return res.status(400).json({
+      error: "Invalid game ID",
+    });
+  }
+
+  const game = retrieveGame(gameId);
+
+  if (!game) {
+    return res.status(404).json({
+      error: "Game not found",
+    });
+  }
+
+  if (game.status !== "In Progress") {
+    return res.status(409).json({
+      error: "Cannot delete completed game",
+    });
+  }
+
+  delete games[gameId];
+  res.status(204).send();
+}
+
 const retrieveGame = (gameId: string) => games[gameId];
 
 const retrieveWord = () => words[Math.ceil(1 * words.length - 1)];
@@ -59,6 +91,7 @@ const GamesController = {
   createGame,
   getGame,
   makeGuess,
+  deleteGame,
 };
 
 export { GamesController };

@@ -40,4 +40,52 @@ describe("game controller", () => {
         expect(res.send).toHaveBeenCalledWith(mockId);
       });
     });
+
+    describe("deleteGame", () => {
+      it("Should return 204 when deleting in progress game", () => {
+        // Arrange
+        const req = mockRequest({ params: { gameId: mockId } });
+        const res = mockResponse();
+        
+        // Create a game first
+        GamesController.createGame(mockRequest(), mockResponse());
+        
+        // Act
+        GamesController.deleteGame(req, res);
+        
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(204);
+        expect(res.send).toHaveBeenCalledTimes(1);
+      });
+      
+      it("Should return 404 when game not found", () => {
+        // Arrange
+        const req = mockRequest({ params: { gameId: "non-existent-id" } });
+        const res = mockResponse();
+        
+        // Act
+        GamesController.deleteGame(req, res);
+        
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.json).toHaveBeenCalledWith({
+          error: "Game not found"
+        });
+      });
+      
+      it("Should return 400 when game ID is missing", () => {
+        // Arrange
+        const req = mockRequest({ params: {} });
+        const res = mockResponse();
+        
+        // Act
+        GamesController.deleteGame(req, res);
+        
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith({
+          error: "Invalid game ID"
+        });
+      });
+    });
 });

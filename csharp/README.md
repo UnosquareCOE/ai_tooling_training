@@ -45,6 +45,31 @@ To run the service using the .NET runtime, follow these steps:
   - The app should be available at: `http://localhost:4567`
 3. Execute the unit tests: `dotnet test`
 
+## Available Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST   | `/games` | Create a new game |
+| GET    | `/games/{gameId}` | Get game details |
+| PUT    | `/games/{gameId}` | Make a guess |
+| DELETE | `/games/{gameId}` | Delete an in-progress game |
+
+### Game Deletion Rules
+- Only games with status "In Progress" can be deleted
+- Completed games (Won/Lost) cannot be deleted
+- Returns 204 No Content on successful deletion
+- Returns 404 if game not found
+- Returns 409 if attempting to delete completed game
+
+**Example Usage:**
+```bash
+# Create a game
+curl -X POST http://localhost:4567/games
+
+# Delete the game (replace with actual game ID)
+curl -X DELETE http://localhost:4567/games/a83c2b3f-3c16-4ab2-9ea0-a4d6a2e51620
+```
+
 ## Prompt Examples
 Below are some prompts that can be tried from the `GamesController`. These prompts are purely for examples and do not product the final result of what is expected from the challenge.
 

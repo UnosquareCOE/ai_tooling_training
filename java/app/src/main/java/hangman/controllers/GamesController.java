@@ -56,6 +56,39 @@ public class GamesController {
         return null;
     }
 
+    /**
+     * Deletes a game that is currently in progress
+     * @param request The HTTP request containing the game ID
+     * @param response The HTTP response
+     * @return null if successful, error message otherwise
+     */
+    public String deleteGame(Request request, Response response) {
+        var gameArgument = request.params("game_id");
+        UUID gameId;
+        
+        try {
+            gameId = UUID.fromString(gameArgument);
+        } catch (IllegalArgumentException e) {
+            response.status(400);
+            return "{\"error\": \"Invalid game ID\"}";
+        }
+        
+        if (!games.containsKey(gameId)) {
+            response.status(404);
+            return "{\"error\": \"Game not found\"}";
+        }
+        
+        Game game = games.get(gameId);
+        if (!"In Progress".equals(game.getStatus())) {
+            response.status(409);
+            return "{\"error\": \"Cannot delete completed game\"}";
+        }
+        
+        games.remove(gameId);
+        response.status(204);
+        return null;
+    }
+
     private static String retrieveWord() {
         var rand = new Random();
         return words.get(rand.nextInt(words.size() - 3));
