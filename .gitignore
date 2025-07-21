@@ -1,3 +1,6 @@
+# MCP configuration (contains sensitive data)
+.mcp.json
+
 # Compiled class file
 *.class
 
