@@ -24,4 +24,8 @@ public class Game {
         status = "In Progress";
         incorrectGuesses = new ArrayList<>();
     }
+
+    public String getStatus() {
+        return status;
+    }
 }

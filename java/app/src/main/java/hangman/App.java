@@ -19,6 +19,7 @@ public class App {
         post("/games/", (request, response) -> gamesController.createGame());
         get("/games/:game_id", (request, response) -> gamesController.getGame(request, response), new JsonTransformer());
         post("/games/:game_id/guesses", "application/json", (request, response) -> gamesController.makeGuess(request, response), new JsonTransformer());
+        delete("/games/:game_id", (request, response) -> gamesController.deleteGame(request, response));
 
         // handle illegal arguments.
         exception(IllegalArgumentException.class, (e, req, res) -> {
