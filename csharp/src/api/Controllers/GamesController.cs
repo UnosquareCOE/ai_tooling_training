@@ -52,7 +52,83 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
         }
         
         var game = RetrieveGame(gameId);
+        if (game == null)
+        {
+            return NotFound(new ResponseErrorViewModel { Message = "Game not found" });
+        }
+
+        // Check if game is already over
+        if (game.Status != "In Progress")
+        {
+            return BadRequest(new ResponseErrorViewModel { Message = "Game is already finished" });
+        }
+
+        // Process the guess
+        var letter = guessViewModel.Letter;
+        var lowerLetter = letter.ToLower();
+        var lowerUnmaskedWord = game.UnmaskedWord?.ToLower();
+
+        if (lowerUnmaskedWord != null && lowerUnmaskedWord.Contains(lowerLetter))
+        {
+            // Correct guess - update masked word
+            var newWord = "";
+            for (int i = 0; i < game.UnmaskedWord?.Length; i++)
+            {
+                if (lowerUnmaskedWord[i] == lowerLetter[0])
+                {
+                    newWord += game.UnmaskedWord[i];
+                }
+                else
+                {
+                    newWord += game.Word?[i];
+                }
+            }
+            game.Word = newWord;
+
+            // Check if word is fully guessed (won)
+            if (!game.Word.Contains('_'))
+            {
+                game.Status = "Won";
+            }
+        }
+        else
+        {
+            // Incorrect guess
+            if (!game.IncorrectGuesses.Contains(letter))
+            {
+                game.IncorrectGuesses.Add(letter);
+                game.RemainingGuesses--;
+
+                // Check if out of guesses (lost)
+                if (game.RemainingGuesses <= 0)
+                {
+                    game.Status = "Lost";
+                }
+            }
+        }
+
         return Ok(game);
+    }
+
+    [HttpDelete("{gameId:guid}")]
+    public ActionResult DeleteGame([FromRoute] Guid gameId)
+    {
+        if (!Games.ContainsKey(gameId))
+        {
+            return NotFound(new ResponseErrorViewModel { Message = "Game not found" });
+        }
+        
+        var game = Games[gameId];
+        if (game.Status != "In Progress")
+        {
+            return BadRequest(new ResponseErrorViewModel 
+            { 
+                Message = "Only games with status 'In Progress' can be deleted" 
+            });
+        }
+        
+        Games.Remove(gameId);
+        return NoContent();
     }
 
     private static GameViewModel? RetrieveGame(Guid gameId)

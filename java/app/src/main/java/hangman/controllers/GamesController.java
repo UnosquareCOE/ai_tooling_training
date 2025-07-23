@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import hangman.interfaces.IdentifierGeneration;
 import hangman.models.Game;
 import hangman.models.Guess;
+import hangman.models.ResponseError;
 import spark.Request;
 import spark.Response;
 
@@ -49,11 +50,70 @@ public class GamesController {
                 throw new IllegalArgumentException("Guess must be supplied with 1 letter");
             }
 
-            // todo: add logic for making a guess, modifying the game and updating the status
+            // Check if game is already over
+            if (!game.getStatus().equals("In Progress")) {
+                throw new IllegalArgumentException("Game is already finished");
+            }
+
+            // Process the guess
+            var letter = guess.getLetter();
+            var lowerLetter = letter.toLowerCase();
+            var lowerUnmaskedWord = game.getUnmaskedWord().toLowerCase();
+
+            if (lowerUnmaskedWord.contains(lowerLetter)) {
+                // Correct guess - update masked word
+                var newWord = new StringBuilder();
+                for (int i = 0; i < game.getUnmaskedWord().length(); i++) {
+                    if (lowerUnmaskedWord.charAt(i) == lowerLetter.charAt(0)) {
+                        newWord.append(game.getUnmaskedWord().charAt(i));
+                    } else {
+                        newWord.append(game.getWord().charAt(i));
+                    }
+                }
+                game.setWord(newWord.toString());
+
+                // Check if word is fully guessed (won)
+                if (!game.getWord().contains("_")) {
+                    game.setStatus("Won");
+                }
+            } else {
+                // Incorrect guess
+                if (!game.getIncorrectGuesses().contains(letter)) {
+                    game.getIncorrectGuesses().add(letter);
+                    game.setRemainingGuesses(game.getRemainingGuesses() - 1);
+
+                    // Check if out of guesses (lost)
+                    if (game.getRemainingGuesses() <= 0) {
+                        game.setStatus("Lost");
+                    }
+                }
+            }
 
             return game;
         }
         return null;
+    }
+
+    public String deleteGame(Request request, Response response) {
+        var gameArgument = request.params("game_id");
+        var gameId = UUID.fromString(gameArgument);
+        
+        if (!games.containsKey(gameId)) {
+            response.status(404);
+            return new Gson().toJson(new ResponseError("Game not found"));
+        }
+        
+        var game = games.get(gameId);
+        if (!game.getStatus().equals("In Progress")) {
+            response.status(400);
+            return new Gson().toJson(new ResponseError(
+                "Only games with status 'In Progress' can be deleted"
+            ));
+        }
+        
+        games.remove(gameId);
+        response.status(204);
+        return "";
     }
 
     private static String retrieveWord() {

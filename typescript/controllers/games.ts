@@ -40,6 +40,54 @@ function makeGuess(req: Request, res: Response) {
 
   const game = retrieveGame(gameId);
 
+  if (!game) {
+    res.status(404).json({
+      message: "Game not found",
+    });
+    return;
+  }
+
+  // Check if game is already over
+  if (game.status !== "In Progress") {
+    res.status(400).json({
+      message: "Game is already finished",
+    });
+    return;
+  }
+
+  // Process the guess
+  const lowerLetter = letter.toLowerCase();
+  const lowerUnmaskedWord = game.unmaskedWord.toLowerCase();
+  
+  if (lowerUnmaskedWord.includes(lowerLetter)) {
+    // Correct guess - update masked word
+    let newWord = "";
+    for (let i = 0; i < game.unmaskedWord.length; i++) {
+      if (lowerUnmaskedWord[i] === lowerLetter) {
+        newWord += game.unmaskedWord[i];
+      } else {
+        newWord += game.word[i];
+      }
+    }
+    game.word = newWord;
+
+    // Check if word is fully guessed (won)
+    if (!game.word.includes("_")) {
+      game.status = "Won";
+    }
+  } else {
+    // Incorrect guess
+    if (!game.incorrectGuesses.includes(letter)) {
+      game.incorrectGuesses.push(letter);
+      game.remainingGuesses--;
+
+      // Check if out of guesses (lost)
+      if (game.remainingGuesses <= 0) {
+        game.status = "Lost";
+      }
+    }
+  }
+
   res.status(200).json(clearUnmaskedWord(game));
 }
 
@@ -55,10 +103,31 @@ const clearUnmaskedWord = (game: any) => {
   return withoutUnmasked;
 };
 
+function deleteGame(req: Request, res: Response) {
+  const { gameId } = req.params;
+  const game = retrieveGame(gameId);
+
+  if (!game) {
+    res.status(404).json({ message: "Game not found" });
+    return;
+  }
+
+  if (game.status !== "In Progress") {
+    res.status(400).json({
+      message: "Only games with status 'In Progress' can be deleted",
+    });
+    return;
+  }
+
+  delete games[gameId];
+  res.status(204).send();
+}
+
 const GamesController = {
   createGame,
   getGame,
   makeGuess,
+  deleteGame,
 };
 
 export { GamesController };

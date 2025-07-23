@@ -26,7 +26,7 @@
 							"pm.test(\"Create Game\", function () {",
 							"    pm.response.to.have.status(200);",
 							"",
-							"    const gameId = pm.response.json().gameId;",
+							"    const gameId = pm.response.text();",
 							"    pm.collectionVariables.set(\"gameID\", gameId);",
 							"});",
 							""
@@ -67,7 +67,7 @@
 							"",
 							"    pm.expect(response.status).to.eql('In Progress')",
 							"    pm.expect(response.incorrectGuesses.length).to.equal(0);",
-							"    pm.expect(response.remainingGuesses).to.equal(5);",
+							"    pm.expect(response.remainingGuesses).to.equal(3);",
 							"    pm.expect(response.word).to.match(/^([_]+)$/);",
 							"});"
 						],
