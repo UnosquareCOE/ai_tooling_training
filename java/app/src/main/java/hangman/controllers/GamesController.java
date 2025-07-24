@@ -56,6 +56,26 @@ public class GamesController {
         return null;
     }
 
+    public String deleteGame(Request request, Response response) {
+        var gameArgument = request.params("game_id");
+        var gameId = UUID.fromString(gameArgument);
+        
+        if (gameId == null || !games.containsKey(gameId)) {
+            response.status(404);
+            return "";
+        }
+
+        var game = games.get(gameId);
+        if (!game.getStatus().equals("In Progress")) {
+            response.status(400);
+            throw new IllegalArgumentException("Only games with status 'In Progress' can be deleted");
+        }
+
+        games.remove(gameId);
+        response.status(204);
+        return "";
+    }
+
     private static String retrieveWord() {
         var rand = new Random();
         return words.get(rand.nextInt(words.size() - 3));

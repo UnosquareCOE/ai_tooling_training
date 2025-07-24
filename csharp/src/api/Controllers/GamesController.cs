@@ -55,6 +55,28 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
         return Ok(game);
     }
 
+    [HttpDelete("{gameId:guid}")]
+    public ActionResult DeleteGame([FromRoute] Guid gameId)
+    {
+        var game = RetrieveGame(gameId);
+        
+        if (game == null)
+        {
+            return NotFound();
+        }
+
+        if (game.Status != "In Progress")
+        {
+            return BadRequest(new ResponseErrorViewModel
+            {
+                Message = "Only games with status 'In Progress' can be deleted"
+            });
+        }
+
+        Games.Remove(gameId);
+        return NoContent();
+    }
+
     private static GameViewModel? RetrieveGame(Guid gameId)
     {
         return Games.GetValueOrDefault(gameId);

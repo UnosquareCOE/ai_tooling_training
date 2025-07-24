@@ -24,6 +24,11 @@ function getGame(req: Request, res: Response) {
   const { gameId } = req.params;
   const game = retrieveGame(gameId);
 
+  if (!game) {
+    res.status(404).send();
+    return;
+  }
+
   res.status(200).json(clearUnmaskedWord(game));
 }
 
@@ -43,6 +48,26 @@ function makeGuess(req: Request, res: Response) {
   res.status(200).json(clearUnmaskedWord(game));
 }
 
+function deleteGame(req: Request, res: Response) {
+  const { gameId } = req.params;
+  const game = retrieveGame(gameId);
+
+  if (!game) {
+    res.status(404).send();
+    return;
+  }
+
+  if (game.status !== "In Progress") {
+    res.status(400).json({
+      message: "Only games with status 'In Progress' can be deleted",
+    });
+    return;
+  }
+
+  delete games[gameId];
+  res.status(204).send();
+}
+
 const retrieveGame = (gameId: string) => games[gameId];
 
 const retrieveWord = () => words[Math.ceil(1 * words.length - 1)];
@@ -59,6 +84,7 @@ const GamesController = {
   createGame,
   getGame,
   makeGuess,
+  deleteGame,
 };
 
-export { GamesController };
+export { GamesController, games };
