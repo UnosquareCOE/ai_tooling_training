@@ -55,6 +55,31 @@ public partial class GamesController(IIdentifierGenerator identifierGenerator) :
         return Ok(game);
     }
 
+    [HttpDelete("{gameId:guid}")]
+    public ActionResult DeleteGame([FromRoute] Guid gameId)
+    {
+        var game = RetrieveGame(gameId);
+        
+        if (game == null)
+        {
+            return NotFound(new ResponseErrorViewModel
+            {
+                Message = "Game not found"
+            });
+        }
+
+        if (game.Status == "Won" || game.Status == "Lost")
+        {
+            return BadRequest(new ResponseErrorViewModel
+            {
+                Message = "Cannot delete completed games"
+            });
+        }
+
+        Games.Remove(gameId);
+        return NoContent();
+    }
+
     private static GameViewModel? RetrieveGame(Guid gameId)
     {
         return Games.GetValueOrDefault(gameId);
